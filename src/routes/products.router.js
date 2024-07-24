@@ -114,6 +114,7 @@ router.delete('/:pid', (req, res) => {
     res.status(404).json({ msg: `Producto con ID ${productID} no se encontro`});
 });
 
+
 export default router;
 
 

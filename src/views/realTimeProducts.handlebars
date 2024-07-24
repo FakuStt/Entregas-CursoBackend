@@ -1,0 +1,21 @@
+<div>
+    {{#each products}}
+    <div>
+        <p>Producto: {{this.title}}</p>
+        <p>Id: {{this.id}}</p>
+        <p>Descripcion: {{this.description}}</p>
+        <p>Codigo: {{this.code}}</p>
+        <p>Precio: {{this.price}}</p>
+        <p>Status: {{this.status}}</p>
+        <p>Categoria: {{this.category}}</p>
+        <p>Thumbnails: {{this.thumbnails}}</p>
+    </div>
+    {{/each}}
+
+    <button onclick="eliminarProduct()" id="eliminarButton">Eliminar Producto</button>
+    <button onclick="agregarProduct()" id="agregarButton">Agregar Producto </button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/js/index.js"></script>
