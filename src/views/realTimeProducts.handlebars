@@ -1,21 +1,105 @@
-<div>
-    {{#each products}}
-    <div>
-        <p>Producto: {{this.title}}</p>
-        <p>Id: {{this.id}}</p>
-        <p>Descripcion: {{this.description}}</p>
-        <p>Codigo: {{this.code}}</p>
-        <p>Precio: {{this.price}}</p>
-        <p>Status: {{this.status}}</p>
-        <p>Categoria: {{this.category}}</p>
-        <p>Thumbnails: {{this.thumbnails}}</p>
-    </div>
-    {{/each}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Products</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <h1>Lista de Productos en Tiempo Real</h1>
+    <ul id="product-list"></ul>
+    <button id="agregarButton">Agregar Producto</button>
+    <button id="eliminarButton">Eliminar Producto</button>
 
-    <button onclick="eliminarProduct()" id="eliminarButton">Eliminar Producto</button>
-    <button onclick="agregarProduct()" id="agregarButton">Agregar Producto </button>
-</div>
+    <script>
+        const socket = io();
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="/js/index.js"></script>
+        function renderProducts(products) {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = '';
+            products.forEach(product => {
+                const li = document.createElement('li');
+                li.textContent = `${product.title} - ${product.description} - $${product.price}`;
+                productList.appendChild(li);
+            });
+        }
+
+        socket.on('updateProducts', (products) => {
+            renderProducts(products);
+        });
+
+        document.getElementById('agregarButton').addEventListener('click', () => {
+            Swal.fire({
+                title: 'Para agregar un producto, completa lo siguiente:',
+                html: `
+                    <input id="title" class="swal2-input" type="text" placeholder="Título" name="title">
+                    <input id="description" class="swal2-input" type="text" placeholder="Descripción" name="description">
+                    <input id="price" class="swal2-input" type="number" placeholder="Precio" name="price">
+                    <input id="code" class="swal2-input" type="text" placeholder="Código" name="code">
+                    <input id="stock" class="swal2-input" type="number" placeholder="Stock" name="stock">
+                    <select id="status" class="swal2-input" name="status">
+                        <option value="true">Disponible</option>
+                        <option value="false">No disponible</option>
+                    </select>
+                    <input id="category" class="swal2-input" type="text" placeholder="Categoría" name="category">
+                    <input id="thumbnails" class="swal2-input" type="text" placeholder="Thumbnails" name="thumbnails">
+                `,
+                focusConfirm: false,
+                preConfirm: () => {
+                    const title = document.getElementById('title').value;
+                    const description = document.getElementById('description').value;
+                    const price = document.getElementById('price').value;
+                    const code = document.getElementById('code').value;
+                    const stock = document.getElementById('stock').value;
+                    const status = document.getElementById('status').value === 'true';
+                    const category = document.getElementById('category').value;
+                    const thumbnails = document.getElementById('thumbnails').value;
+
+                    if (!title || !description || !price || !code || !stock || !category || !thumbnails) {
+                        Swal.showValidationMessage('Todos los campos son obligatorios.');
+                        return false;
+                    }
+
+                    return {
+                        title: title,
+                        description: description,
+                        price: parseFloat(price),
+                        code: code,
+                        stock: parseInt(stock, 10),
+                        status: status,
+                        category: category,
+                        thumbnails: thumbnails
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const newProduct = result.value;
+                    socket.emit('newProduct', newProduct);
+                    Swal.fire('Producto añadido', 'Tu producto ha sido añadido exitosamente', 'success');
+                }
+            });
+        });
+
+        document.getElementById('eliminarButton').addEventListener('click', () => {
+            Swal.fire({
+                title: 'Ingresa el id del Producto a eliminar:',
+                input: "number",
+                text: "id...",
+                icon: 'warning',
+                inputValidator: (value) => {
+                    return !value && "Debes ingresar un id";
+                }
+            }).then(result => {
+                if (result.isConfirmed) {
+                    socket.emit('productsEliminado', result.value);
+                    Swal.fire('Producto eliminado', 'Tu producto ha sido eliminado exitosamente', 'success');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+

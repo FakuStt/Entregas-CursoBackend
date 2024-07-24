@@ -1,49 +1,58 @@
-import express from "express"
-import cartRoute from "./routes/cart.router.js"
-import productsRoute from "./routes/products.router.js"
-import homeRoute from "./routes/home.router.js"
-import realTimeProductsRoute from "./routes/home.router.js"
-import handlebars from "express-handlebars"
-import __dirname from "./utils.js"
-import { Server } from "socket.io"
+// app.js
+import express from "express";
+import cartRoute from "./routes/cart.router.js";
+import productsRoute from "./routes/products.router.js";
+import homeRoute from "./routes/home.router.js";
+import realTimeProductsRoute from "./routes/realTimeProducts.router.js";
+import handlebars from "express-handlebars";
+import { Server } from "socket.io";
+import http from "http";
+import __dirname from "./utils.js";
+import { getProducts, addProduct, deleteProduct } from "./utils.js";
 
-const app = express()
-const PORT = 8080
+const app = express();
+const PORT = 8080;
 
-let products = []
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true}))
+app.use("/api/carts", cartRoute);
+app.use("/api/products", productsRoute);
+app.use("/", homeRoute);
+app.use("/realtimeproducts", realTimeProductsRoute);
 
-app.use("/api/carts", cartRoute)
-app.use("/api/products", productsRoute)
-app.use("/", homeRoute)
-app.use("/realtimeproducts", realTimeProductsRoute)
+app.engine('handlebars', handlebars.engine());
 
-app.engine('handlebars',handlebars.engine())
+app.set('views', __dirname + '/views');
+app.set('view engine', 'handlebars');
 
-app.set('views', __dirname + '/views')
-app.set('view engine', 'handlebars')
+app.use(express.static(__dirname + '/public'));
 
-app.use(express.static(__dirname + '/public'))
+const server = http.createServer(app);
+const io = new Server(server);
 
-const httpServer = app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`))
-const socketServer = new Server(httpServer)
+io.on('connection', (socket) => {
+    console.log('Nuevo cliente conectado');
+    
+    // Enviar la lista de productos actualizada al cliente
+    socket.emit('updateProducts', getProducts());
 
-socketServer.on('connection', socket => {
-    console.log("Nuevo cliente conectado")
+    // Manejar la adición de un nuevo producto
+    socket.on('newProduct', (product) => {
+        addProduct(product);
+        io.emit('updateProducts', getProducts());
+    });
 
-    socket.on('message', data => {
-        console.log(`soy la data ${data}`)
-    })
+    // Manejar la eliminación de un producto
+    socket.on('productsEliminado', (id) => {
+        deleteProduct(id);
+        io.emit('updateProducts', getProducts());
+    });
 
-    socket.on('productsEliminado', (eliminadoId) =>{
-        products = products.filter((prod) => prod.id !== eliminadoId)
-    })
-    socket.on('newProduct', (newProduct) => {
-        const lastProduct = products[products.length - 1];
-        const newProductId = lastProduct ? lastProduct.id + 1 : 1;
-        newProduct.id = newProductId;
-        products.push(newProduct)
-    })
-})
+    // Manejar la desconexión del cliente
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
+    });
+});
+
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
