@@ -1,0 +1,13 @@
+[
+  {
+    "title": "Producto 1",
+    "description": "Descripcion de Producto 1",
+    "price": 500,
+    "code": "ffhh23",
+    "stock": 4,
+    "status": true,
+    "category": "Ropa",
+    "thumbnails": "tr",
+    "id": 1
+  }
+]

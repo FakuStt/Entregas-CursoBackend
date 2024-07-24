@@ -1,27 +1,26 @@
-// index.js
 import { getProducts } from "../utils.js";
 
-// Esta función puede ser llamada desde cualquier lugar donde necesites manipular los productos
-export function setupRealTimeProducts(io) {
+// FUNCION PARA MANIPULAR PRODUCTOS
+export function setupRealTimeProducts(serverSocket) {
     io.on('connection', (socket) => {
         console.log('Nuevo cliente conectado a realTimeProducts');
         
-        // Enviar la lista de productos actualizada al cliente
+        // ENVIAR LA LISTA DE LOS PRODUCTOS ACTUALIZADOS AL CLIENTE
         socket.emit('updateProducts', getProducts());
 
-        // Manejar la adición de un nuevo producto
+        // MANEJAR LA ADICION DE UN NUEVO PRODUCTO
         socket.on('newProduct', (product) => {
             addProduct(product);
-            io.emit('updateProducts', getProducts());
+            serverSocket.emit('updateProducts', getProducts());
         });
 
-        // Manejar la eliminación de un producto
+        // MANEJAR LA ELIMINACION DE UN PRODUCTO
         socket.on('productsEliminado', (id) => {
             deleteProduct(id);
-            io.emit('updateProducts', getProducts());
+            serverSocket.emit('updateProducts', getProducts());
         });
 
-        // Manejar la desconexión del cliente
+        // MANEJAR LA DESCONECCION DE UN CLIENTE
         socket.on('disconnect', () => {
             console.log('Cliente desconectado de realTimeProducts');
         });

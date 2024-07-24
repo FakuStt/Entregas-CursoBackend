@@ -1,14 +1,21 @@
-// app.js
 import express from "express";
+import { Server } from "socket.io";
+import handlebars from "express-handlebars";
+import http from "http";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+//Importo rutas y funciones
 import cartRoute from "./routes/cart.router.js";
 import productsRoute from "./routes/products.router.js";
 import homeRoute from "./routes/home.router.js";
-import realTimeProductsRoute from "./routes/realTimeProducts.router.js";
-import handlebars from "express-handlebars";
-import { Server } from "socket.io";
-import http from "http";
-import __dirname from "./utils.js";
+import realTimeProductsRoute from "./routes/realtimeproducts.router.js";
 import { getProducts, addProduct, deleteProduct } from "./utils.js";
+
+//No me anduvo importar el dirname desde utils, acudi a esta solucion
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = 8080;
@@ -16,6 +23,7 @@ const PORT = 8080;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//Rutas
 app.use("/api/carts", cartRoute);
 app.use("/api/products", productsRoute);
 app.use("/", homeRoute);
@@ -23,33 +31,33 @@ app.use("/realtimeproducts", realTimeProductsRoute);
 
 app.engine('handlebars', handlebars.engine());
 
-app.set('views', __dirname + '/views');
+app.set('views', path.join(__dirname ,'views'));
 app.set('view engine', 'handlebars');
 
 app.use(express.static(__dirname + '/public'));
 
 const server = http.createServer(app);
-const io = new Server(server);
+const socketServer = new Server(server);
 
-io.on('connection', (socket) => {
+socketServer.on('connection', (socket) => {
     console.log('Nuevo cliente conectado');
     
-    // Enviar la lista de productos actualizada al cliente
+    // ENVIAR LISTA ACTUALIZADA A CLIENTE
     socket.emit('updateProducts', getProducts());
 
-    // Manejar la adición de un nuevo producto
+    // MANEJAR LA ADICION DE UN PRODUCTO
     socket.on('newProduct', (product) => {
         addProduct(product);
-        io.emit('updateProducts', getProducts());
+        socketServer.emit('updateProducts', getProducts());
     });
 
-    // Manejar la eliminación de un producto
+    // MANEJAR LA ELIMINACIO DE UN PRODUCTO
     socket.on('productsEliminado', (id) => {
         deleteProduct(id);
-        io.emit('updateProducts', getProducts());
+        socketServer.emit('updateProducts', getProducts());
     });
 
-    // Manejar la desconexión del cliente
+    // MANEJAR LA DESCONECCION DEL USUARIO
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');
     });
