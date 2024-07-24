@@ -36,4 +36,14 @@ socketServer.on('connection', socket => {
     socket.on('message', data => {
         console.log(`soy la data ${data}`)
     })
+
+    socket.on('productsEliminado', (eliminadoId) =>{
+        products = products.filter((prod) => prod.id !== eliminadoId)
+    })
+    socket.on('newProduct', (newProduct) => {
+        const lastProduct = products[products.length - 1];
+        const newProductId = lastProduct ? lastProduct.id + 1 : 1;
+        newProduct.id = newProductId;
+        products.push(newProduct)
+    })
 })
