@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "title": "gjhgh",
+    "description": "Descripcion de Producto 1",
+    "price": 576,
+    "code": "ffhh23",
+    "stock": 56,
+    "status": true,
+    "category": "gh",
+    "thumbnails": "gh",
+    "id": 2
+  }
+]

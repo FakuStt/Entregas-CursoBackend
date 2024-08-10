@@ -1,3 +1,4 @@
+// NO TIENE USO, SIRVIO DE EJEMPLO
 import { Router } from "express";
 
 import userModel from "../models/user.model.js";
