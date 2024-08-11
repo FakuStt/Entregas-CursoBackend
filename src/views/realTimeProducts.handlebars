@@ -11,19 +11,13 @@
     <h1>Lista de Productos en Tiempo Real</h1>
     <ul id="product-list"></ul>
 
+    <button id="addProductButton">Agregar Producto</button>
     <h2>Carritos Disponibles</h2>
     <ul id="cart-list"></ul>
 
     <button id="crearCartButton">Crear Carrito</button>
-    <button id="vaciarCartButton">Vaciar Carrito</button>
-    <button id="eliminarCartButton">Eliminar Carrito</button>
-    <button id="modificarCantidadButton">Modificar Cantidad en Carrito</button>
-    <button id="agregarButton">Agregar Producto</button>
-    <button id="eliminarButton">Eliminar Producto</button>
-    <button id="modificarButton">Modificar Producto</button>
 
-    <!-- Nuevo botón para agregar un producto -->
-    <button id="addProductButton">Agregar Producto</button>
+    
 
     <script>
         const socket = io();
@@ -38,6 +32,7 @@
                     ${product.title} - ${product.price} 
                     <button onclick="addProductToCart('${product._id}')">Agregar al Carrito</button>
                     <button onclick="modifyProduct('${product._id}')">Modificar</button>
+                    <button onclick="deleteProduct('${product._id}')">Eliminar</button>
                 `;
                 productList.appendChild(li);
             });
@@ -106,21 +101,42 @@
         }
 
         // Agregar producto al carrito
-        function addProductToCart(productID) {
-            getCartOptions().then(options => {
-                Swal.fire({
-                    title: 'Selecciona un carrito para agregar el producto:',
-                    input: 'select',
-                    inputOptions: options,
-                    inputPlaceholder: 'Selecciona un carrito',
-                    showCancelButton: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        socket.emit('addProductToCart', { cartId: result.value, productId: productID });
+
+        // Define la función addProductToCart fuera del manejador del evento
+function addProductToCart(productID) {
+    getCartOptions().then(options => {
+        Swal.fire({
+            title: 'Selecciona un carrito para agregar el producto:',
+            input: 'select',
+            inputOptions: options,
+            inputPlaceholder: 'Selecciona un carrito',
+            showCancelButton: true,
+            confirmButtonText: 'Agregar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                socket.emit('addProductToCart', { cartId: result.value, productId: productID }, (response) => {
+                    if (response.success) {
+                        Swal.fire('Producto Agregado', 'El producto fue agregado al carrito con éxito', 'success');
+                    } else {
+                        Swal.fire('Error', response.message || 'No se pudo agregar el producto al carrito', 'error');
                     }
                 });
-            });
-        }
+            }
+        });
+    }).catch(error => {
+        Swal.fire('Error', 'No se pudieron cargar las opciones de carritos', 'error');
+        console.error('Error al obtener las opciones de carritos:', error);
+    });
+}
+
+// Manejador del evento click en el botón
+document.getElementById('addProductButton').addEventListener('click', () => {
+    // Asegúrate de definir productID en algún lugar o pásalo como un argumento adecuado
+    const productID = productID; // Reemplaza esto con el ID real del producto que deseas agregar
+    addProductToCart(productID);
+});
+
 
         // Modificar producto
         function modifyProduct(productID) {
@@ -176,23 +192,22 @@
             });
         }
 
-        // Eliminar producto
-        document.getElementById('eliminarButton').addEventListener('click', () => {
+        //eliminar producto
+        function deleteProduct(productID) {
             Swal.fire({
-                title: 'Ingresa el id del Producto a eliminar:',
-                input: "text",
-                text: "ID del producto...",
+                title: '¿Estás seguro de que deseas eliminar este carrito?',
+                text: "Esta acción eliminará el carrito permanentemente.",
                 icon: 'warning',
-                inputValidator: (value) => {
-                    return !value && "Debes ingresar un ID";
-                }
-            }).then(result => {
+                showCancelButton: true,
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
                 if (result.isConfirmed) {
-                    socket.emit('deleteProduct', result.value);
-                    Swal.fire('Producto eliminado', 'El producto ha sido eliminado exitosamente', 'success');
+                    socket.emit('deleteProduct', productID);
                 }
             });
-        });
+        }
+        
 
         // Modificar cantidad de producto en carrito
         function modifyProductQuantity(cartID, productID) {
@@ -239,58 +254,64 @@
         }
 
         // Agregar nuevo producto
-        document.getElementById('addProductButton').addEventListener('click', () => {
-            Swal.fire({
-                title: 'Agregar un nuevo producto',
-                html: `
-                    <input id="title" class="swal2-input" type="text" placeholder="Título">
-                    <input id="description" class="swal2-input" type="text" placeholder
-                                        <input id="description" class="swal2-input" type="text" placeholder="Descripción">
-                    <input id="price" class="swal2-input" type="number" placeholder="Precio">
-                    <input id="code" class="swal2-input" type="text" placeholder="Código">
-                    <input id="stock" class="swal2-input" type="number" placeholder="Stock">
-                    <select id="status" class="swal2-input">
-                        <option value="true">Disponible</option>
-                        <option value="false">No disponible</option>
-                    </select>
-                    <input id="category" class="swal2-input" type="text" placeholder="Categoría">
-                    <input id="thumbnails" class="swal2-input" type="text" placeholder="Thumbnails">
-                `,
-                focusConfirm: false,
-                preConfirm: () => {
-                    const title = document.getElementById('title').value;
-                    const description = document.getElementById('description').value;
-                    const price = document.getElementById('price').value;
-                    const code = document.getElementById('code').value;
-                    const stock = document.getElementById('stock').value;
-                    const status = document.getElementById('status').value === 'true';
-                    const category = document.getElementById('category').value;
-                    const thumbnails = document.getElementById('thumbnails').value;
+document.getElementById('addProductButton').addEventListener('click', () => {
+    Swal.fire({
+        title: 'Agregar un nuevo producto',
+        html: `
+            <input id="title" class="swal2-input" type="text" placeholder="Título">
+            <input id="description" class="swal2-input" type="text" placeholder="Descripción">
+            <input id="price" class="swal2-input" type="number" placeholder="Precio">
+            <input id="code" class="swal2-input" type="text" placeholder="Código">
+            <input id="stock" class="swal2-input" type="number" placeholder="Stock">
+            <select id="status" class="swal2-input">
+                <option value="true">Disponible</option>
+                <option value="false">No disponible</option>
+            </select>
+            <input id="category" class="swal2-input" type="text" placeholder="Categoría">
+            <input id="thumbnails" class="swal2-input" type="text" placeholder="Thumbnails">
+        `,
+        focusConfirm: false,
+        preConfirm: () => {
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const price = document.getElementById('price').value.trim();
+            const code = document.getElementById('code').value.trim();
+            const stock = document.getElementById('stock').value.trim();
+            const status = document.getElementById('status').value === 'true';
+            const category = document.getElementById('category').value.trim();
+            const thumbnails = document.getElementById('thumbnails').value.trim();
 
-                    if (!title || !description || !price || !code || !stock || !category || !thumbnails) {
-                        Swal.showValidationMessage('Todos los campos son obligatorios.');
-                        return false;
-                    }
+            if (!title || !description || !price || !code || !stock || !category || !thumbnails) {
+                Swal.showValidationMessage('Todos los campos son obligatorios.');
+                return false;
+            }
 
-                    return {
-                        title: title,
-                        description: description,
-                        price: parseFloat(price),
-                        code: code,
-                        stock: parseInt(stock, 10),
-                        status: status,
-                        category: category,
-                        thumbnails: thumbnails
-                    };
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const newProduct = result.value;
-                    socket.emit('addProduct', newProduct);
+            return {
+                title,
+                description,
+                price: parseFloat(price),
+                code,
+                stock: parseInt(stock, 10),
+                status,
+                category,
+                thumbnails
+            };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const newProduct = result.value;
+            socket.emit('addProduct', newProduct, (response) => {
+                if (response.success) {
                     Swal.fire('Producto agregado', 'El nuevo producto ha sido agregado exitosamente', 'success');
+                } else {
+                    Swal.fire('Error', 'Hubo un problema al agregar el producto', 'error');
                 }
             });
-        });
+        }
+    });
+});
+
+
 
         // Actualizar vistas cuando se reciben datos nuevos
         socket.on('updateProducts', (products) => {
@@ -346,6 +367,7 @@
         // Inicializar vista
         getProducts();
         getCarts();
+
     </script>
 </body>
 </html>

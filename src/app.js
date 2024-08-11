@@ -101,10 +101,13 @@ socketServer.on('connection', (socket) => {
     });
 
     // Agregar producto
-    socket.on('newProduct', async (productData) => {
-        const newProduct = new productModel(productData);
-        await newProduct.save();
-        socketServer.emit('updateProducts', await productModel.find());
+    socket.on('addProduct', async (productData, callback) => {
+            const newProduct = new productModel(productData);
+            await newProduct.save();
+            
+            callback({ success: true });
+            // Emitir el evento a todos los clientes conectados para actualizar la lista de productos en tiempo real
+            socketServer.emit('updateProducts', await productModel.find()); 
     });
 
     // Modificar producto
@@ -120,19 +123,33 @@ socketServer.on('connection', (socket) => {
     });
 
     // Agregar producto al carrito
-    socket.on('addProductToCart', async ({ cartId, productId }) => {
-        const cart = await cartModel.findById(cartId);
-        if (cart) {
-            const existingProduct = cart.products.find(p => p.product.toString() === productId);
-            if (existingProduct) {
-                existingProduct.quantity += 1;
+    socket.on('addProductToCart', async ({ cartId, productId }, callback) => {
+        try {
+            const cart = await cartModel.findById(cartId);
+            if (cart) {
+                const existingProduct = cart.products.find(p => p.product.toString() === productId);
+                if (existingProduct) {
+                    existingProduct.quantity += 1;
+                } else {
+                    cart.products.push({ product: productId, quantity: 1 });
+                }
+                await cart.save();
+    
+                // Emitir evento para actualizar todos los carritos
+                socketServer.emit('updateCarts', await cartModel.find());
+    
+                // Confirmar éxito al cliente
+                callback({ success: true });
             } else {
-                cart.products.push({ product: productId, quantity: 1 });
+                // Si no se encuentra el carrito
+                callback({ success: false, message: 'Carrito no encontrado' });
             }
-            await cart.save();
-            socketServer.emit('updateCarts', await cartModel.find());
+        } catch (error) {
+            console.error('Error al agregar producto al carrito:', error);
+            callback({ success: false, message: 'Error al agregar producto al carrito' });
         }
     });
+    
 
     // Actualizar cantidad de producto en carrito
     socket.on('updateProductQuantity', async ({ cartId, productId, quantity }) => {
