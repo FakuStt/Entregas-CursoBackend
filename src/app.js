@@ -10,7 +10,6 @@ import mongoose from "mongoose";
 import cartRoute from "./routes/cart.router.js";
 import productsRoute from "./routes/products.router.js";
 import viewsRoute from "./routes/views.router.js";
-import userRouter from "./routes/users.router.js";
 import cartModel from "./models/cart.model.js";
 import productModel from "./models/products.model.js";
 
@@ -30,7 +29,6 @@ mongoose.connect("mongodb+srv://facu12345:facu12345@cluster0.0zg4wjj.mongodb.net
     .then(() => console.log("Conectado a la DB"))
     .catch(error => console.error("No se pudo conectar a la DB", error));
 
-// Configuración de Handlebars como motor de plantillas
 app.engine('handlebars', handlebars.engine());
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'handlebars');
@@ -43,7 +41,6 @@ app.use("/api/carts", cartRoute);
 app.use("/api/products", productsRoute);
 app.use("/", viewsRoute);
 app.use("/realtimeproducts", viewsRoute);
-app.use("/user", userRouter);
 
 // Configuración de servidor HTTP y Socket.io
 const httpServer = http.createServer(app);
@@ -52,26 +49,23 @@ const socketServer = new Server(httpServer);
 socketServer.on('connection', (socket) => {
     console.log('Nuevo cliente conectado');
     
-    // Emitir productos al conectar
-    socket.on('getProducts', async () => {
-        try {
-            const products = await productModel.find();
-            socket.emit('updateProducts', products); // Envía los productos de vuelta al cliente con un evento personalizado
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            socket.emit('updateProductsError', { error: 'Failed to fetch products' }); // Envía un error si ocurre
-        }
-    });
+socket.on('getProducts', async () => {
+    try {
+        const products = await productModel.find();
+        socket.emit('updateProducts', products); // Envía los productos de vuelta al cliente con un evento personalizado
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        socket.emit('updateProductsError', { error: 'Failed to fetch products' }); // Envía un error si ocurre
+    }
+});
     
-
-    // Emitir carritos al conectar
     socket.on('getCarts', async () => {
         try {
             const carts = await cartModel.find();
             socket.emit('updateCarts', carts); // Envía los carritos de vuelta al cliente con un evento personalizado
         } catch (error) {
             console.error('Error fetching carts:', error);
-            socket.emit('updateCartsError', { error: 'Failed to fetch carts' }); // Envía un error si ocurre
+            socket.emit('updateCartsError', { error: 'Failed to fetch carts' }); 
         }
     });
     

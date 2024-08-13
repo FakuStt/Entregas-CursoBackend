@@ -9,9 +9,25 @@
 </head>
 <body>
     <h1>Lista de Productos en Tiempo Real</h1>
-    <ul id="product-list"></ul>
-
-    <button id="addProductButton">Agregar Producto</button>
+    <h1>Productos</h1>
+    <ul>
+        {{#each docs}}
+            <li><p>{{this.title}}   -   Precio: {{this.price}}   -   Categoria: {{this.category}}   -   Descripcion: {{description}}   -   Disponibles: {{stock}}</p> </li>
+            <button onclick="modifyProduct('{{this._id}}')">Modificar</button>
+            <button onclick="deleteProduct('{{this._id}}')">Eliminar</button>
+            <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
+        {{/each}}
+        <button id="addProductButton">Agregar Nuevo Producto</button>
+    </ul>
+    <div>
+        {{#if prevLink}}
+            <a href="{{prevLink}}">Anterior</a>
+        {{/if}}
+        {{#if nextLink}}
+            <a href="{{nextLink}}">Siguiente</a>
+        {{/if}}
+    </div>
+    
     <h2>Carritos Disponibles</h2>
     <ul id="cart-list"></ul>
 
@@ -19,22 +35,7 @@
 
     <script>
         const socket = io();
-
-        // Renderizar productos
-        function renderProducts(products) {
-            const productList = document.getElementById('product-list');
-            productList.innerHTML = '';
-            products.forEach(product => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    ${product.title} - ${product.price} 
-                    <button onclick="modifyProduct('${product._id}')">Modificar</button>
-                    <button onclick="deleteProduct('${product._id}')">Eliminar</button>
-                    <button onclick="addProductToCart('${product._id}')">Agregar al Carrito</button>
-                `;
-                productList.appendChild(li);
-            });
-        }
+            
 
         // Renderizar carritos
         function renderCarts(carts) {
@@ -297,6 +298,7 @@ function addProductToCart(productID) {
         // Inicialización
         getProducts();
         getCarts();
+        changePage(currentPage);
     </script>
 </body>
 </html>
