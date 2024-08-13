@@ -11,7 +11,6 @@ import cartRoute from "./routes/cart.router.js";
 import productsRoute from "./routes/products.router.js";
 import viewsRoute from "./routes/views.router.js";
 import userRouter from "./routes/users.router.js";
-import userModel from "./models/user.model.js";
 import cartModel from "./models/cart.model.js";
 import productModel from "./models/products.model.js";
 
@@ -124,31 +123,58 @@ socketServer.on('connection', (socket) => {
 
     // Agregar producto al carrito
     socket.on('addProductToCart', async ({ cartId, productId }, callback) => {
+        console.log('addProductToCart event received');
+        console.log('cartId:', cartId);
+        console.log('productId:', productId);
+    
         try {
             const cart = await cartModel.findById(cartId);
-            if (cart) {
-                const existingProduct = cart.products.find(p => p.product.toString() === productId);
-                if (existingProduct) {
-                    existingProduct.quantity += 1;
-                } else {
-                    cart.products.push({ product: productId, quantity: 1 });
+            if (!cart) {
+                const message = 'Carrito no encontrado';
+                console.error(message);
+                if (typeof callback === 'function') {
+                    return callback({ success: false, message });
                 }
-                await cart.save();
+                return;
+            }
     
-                // Emitir evento para actualizar todos los carritos
-                socketServer.emit('updateCarts', await cartModel.find());
+            const product = await productModel.findById(productId);
+            if (!product) {
+                const message = 'Producto no encontrado';
+                console.error(message);
+                if (typeof callback === 'function') {
+                    return callback({ success: false, message });
+                }
+                return;
+            }
     
-                // Confirmar éxito al cliente
-                callback({ success: true });
+            // Verifica si el producto ya está en el carrito
+            const existingProduct = cart.products.find(p => p.product.toString() === productId.toString());
+            if (existingProduct) {
+                // Incrementa la cantidad si ya existe
+                existingProduct.quantity += 1;
+                console.log('Product quantity updated:', existingProduct);
             } else {
-                // Si no se encuentra el carrito
-                callback({ success: false, message: 'Carrito no encontrado' });
+                // Agrega el producto al carrito
+                cart.products.push({ product: productId, quantity: 1 });
+                console.log('Product added:', { product: productId, quantity: 1 });
+            }
+    
+            await cart.save();
+            console.log('Cart updated:', cart);
+    
+            if (typeof callback === 'function') {
+                callback({ success: true });
             }
         } catch (error) {
             console.error('Error al agregar producto al carrito:', error);
-            callback({ success: false, message: 'Error al agregar producto al carrito' });
+            if (typeof callback === 'function') {
+                callback({ success: false, message: 'Error interno del servidor' });
+            }
         }
     });
+    
+    
     
 
     // Actualizar cantidad de producto en carrito
