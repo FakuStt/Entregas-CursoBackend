@@ -1,13 +1,11 @@
 const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("El DOM está completamente cargado.");
+    console.log("El DOM esta cargado");
 
-    // Configurar el botón de agregar producto
     setupAddProductButton();
 
-    // Configurar las funciones de carritos
-    getCarts();
+    crearCart();
 });
 
 async function getCarts() {
@@ -22,18 +20,9 @@ async function getCarts() {
 
 // Renderizar carritos
 function renderCarts(carts) {
-    const cartList = document.getElementById('cart-list');
-    cartList.innerHTML = '';
-    carts.forEach(cart => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            Carrito ID: ${cart._id}
-            <button onclick="emptyCart('${cart._id}')">Vaciar Carrito</button>
-            <button onclick="deleteCart('${cart._id}')">Eliminar Carrito</button>
-        `;
-        cartList.appendChild(li);
-    });
+    socket.emit('getCarts');
 }
+
 
 // Solicitar productos
 function getProducts() {
@@ -43,9 +32,14 @@ function getProducts() {
 
 
 // Crear nuevo carrito
-document.getElementById('crearCartButton').addEventListener('click', () => {
-    socket.emit('createCart');
-});
+function crearCart() {
+    const crearCartButton = document.getElementById('crearCartButton');
+    if (crearCartButton) {
+        crearCartButton.addEventListener('click', () => {
+            socket.emit('createCart');
+        });
+    }
+}
 
 // Vaciar carrito
 function emptyCart(cartID) {

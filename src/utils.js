@@ -1,13 +1,10 @@
-import { readFileSync, writeFileSync } from 'fs';
-import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import productModel from './models/products.model.js';
+import cartModel from './models/cart.model.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const productsFilePath = path.join(__dirname, 'jsons', 'products.json');
-
 
 export async function getProducts(reqParams) {
         const limit = parseInt(reqParams.limit) || 10;
@@ -43,7 +40,40 @@ export async function getProducts(reqParams) {
         res.status(500).json({ error: 'No se pueden cargar los productos', err });
     }
 }
-
-
-
-export default { getProducts, __dirname };
+export async function agregarCarrito({ cartId, productId }, callback){
+    const cart = await cartModel.findById(cartId);
+            if (!cart) {
+                const message = 'Carrito no encontrado';
+                console.error(message);
+                if (typeof callback === 'function') {
+                    return callback({ success: false, message });
+                }
+                return;
+            }
+    
+            const product = await productModel.findById(productId);
+            if (!product) {
+                const message = 'Producto no encontrado';
+                console.error(message);
+                if (typeof callback === 'function') {
+                    return callback({ success: false, message });
+                }
+                return;
+            }
+    
+            // Verifica si el producto ya está en el carrito
+            const existingProduct = cart.products.find(p => p.product.toString() === productId.toString());
+            if (existingProduct) {
+                // Incrementa la cantidad si ya existe
+                existingProduct.quantity += 1;
+                console.log('Product quantity updated:', existingProduct);
+            } else {
+                // Agrega el producto al carrito
+                cart.products.push({ product: productId, quantity: 1 });
+                console.log('Product added:', { product: productId, quantity: 1 });
+            }
+    
+            await cart.save();
+            return cart
+}
+export default { getProducts,agregarCarrito, __dirname };

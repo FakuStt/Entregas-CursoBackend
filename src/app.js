@@ -12,6 +12,7 @@ import productsRoute from "./routes/products.router.js";
 import viewsRoute from "./routes/views.router.js";
 import cartModel from "./models/cart.model.js";
 import productModel from "./models/products.model.js";
+import { agregarCarrito } from "./utils.js";
 
 // Resolver __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -49,7 +50,7 @@ const socketServer = new Server(httpServer);
 socketServer.on('connection', (socket) => {
     console.log('Nuevo cliente conectado');
     
-socket.on('getProducts', async () => {
+    socket.on('getProducts', async () => {
     try {
         const products = await productModel.find();
         socket.emit('updateProducts', products); // Envía los productos de vuelta al cliente con un evento personalizado
@@ -57,7 +58,7 @@ socket.on('getProducts', async () => {
         console.error('Error fetching products:', error);
         socket.emit('updateProductsError', { error: 'Failed to fetch products' }); // Envía un error si ocurre
     }
-});
+    });
     
     socket.on('getCarts', async () => {
         try {
@@ -69,15 +70,12 @@ socket.on('getProducts', async () => {
         }
     });
     
-
-    // Crear carrito
     socket.on('createCart', async () => {
         const newCart = new cartModel({ products: [] });
         await newCart.save();
         socketServer.emit('updateCarts', await cartModel.find());
     });
 
-    // Vaciar carrito
     socket.on('emptyCart', async (cartId) => {
         const cart = await cartModel.findById(cartId);
         if (cart) {
@@ -87,74 +85,32 @@ socket.on('getProducts', async () => {
         }
     });
 
-    // Eliminar carrito
     socket.on('deleteCart', async (cartId) => {
         await cartModel.findByIdAndDelete(cartId);
         socketServer.emit('updateCarts', await cartModel.find());
     });
 
-    // Agregar producto
     socket.on('addProduct', async (productData, callback) => {
             const newProduct = new productModel(productData);
             await newProduct.save();
             
             callback({ success: true });
-            // Emitir el evento a todos los clientes conectados para actualizar la lista de productos en tiempo real
             socketServer.emit('updateProducts', await productModel.find()); 
     });
 
-    // Modificar producto
     socket.on('updateProduct', async (productData) => {
         await productModel.findByIdAndUpdate(productData.id, productData, { new: true });
         socketServer.emit('updateProducts', await productModel.find());
     });
 
-    // Eliminar producto
     socket.on('deleteProduct', async (productId) => {
         await productModel.findByIdAndDelete(productId);
         socketServer.emit('updateProducts', await productModel.find());
     });
 
-    // Agregar producto al carrito
     socket.on('addProductToCart', async ({ cartId, productId }, callback) => {
-        console.log('addProductToCart event received');
-        console.log('cartId:', cartId);
-        console.log('productId:', productId);
-    
         try {
-            const cart = await cartModel.findById(cartId);
-            if (!cart) {
-                const message = 'Carrito no encontrado';
-                console.error(message);
-                if (typeof callback === 'function') {
-                    return callback({ success: false, message });
-                }
-                return;
-            }
-    
-            const product = await productModel.findById(productId);
-            if (!product) {
-                const message = 'Producto no encontrado';
-                console.error(message);
-                if (typeof callback === 'function') {
-                    return callback({ success: false, message });
-                }
-                return;
-            }
-    
-            // Verifica si el producto ya está en el carrito
-            const existingProduct = cart.products.find(p => p.product.toString() === productId.toString());
-            if (existingProduct) {
-                // Incrementa la cantidad si ya existe
-                existingProduct.quantity += 1;
-                console.log('Product quantity updated:', existingProduct);
-            } else {
-                // Agrega el producto al carrito
-                cart.products.push({ product: productId, quantity: 1 });
-                console.log('Product added:', { product: productId, quantity: 1 });
-            }
-    
-            await cart.save();
+            const cart = agregarCarrito({ cartId, productId }, callback);
             console.log('Cart updated:', cart);
     
             if (typeof callback === 'function') {
@@ -167,11 +123,7 @@ socket.on('getProducts', async () => {
             }
         }
     });
-    
-    
-    
 
-    // Actualizar cantidad de producto en carrito
     socket.on('updateProductQuantity', async ({ cartId, productId, quantity }) => {
         const cart = await cartModel.findById(cartId);
         if (cart) {

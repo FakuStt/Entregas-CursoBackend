@@ -1,6 +1,7 @@
 import express from 'express';
 import productModel from '../models/products.model.js';
 import { getProducts } from '../utils.js';
+import cartModel from '../models/cart.model.js';
 
 
 const router = express.Router();
@@ -31,9 +32,11 @@ router.get('/', async(req, res) => {
 router.get('/realtimeproducts', async (req, res) => {
     try {
         const result = await getProducts(req.query);
-        console.log(result.docs)
+        const carts = await cartModel.find().lean()
+        console.log(carts)
 
         res.render('realtimeproducts', { 
+            cart: carts,
             payload: result.docs,
             totalPages: result.totalPages,
             page: result.page,
