@@ -53,27 +53,28 @@ socketServer.on('connection', (socket) => {
     socket.on('getProducts', async () => {
     try {
         const products = await productModel.find();
-        socket.emit('updateProducts', products); // Envía los productos de vuelta al cliente con un evento personalizado
+        socketServer.emit('updateProducts', products); // Envía los productos de vuelta al cliente con un evento personalizado
     } catch (error) {
         console.error('Error fetching products:', error);
-        socket.emit('updateProductsError', { error: 'Failed to fetch products' }); // Envía un error si ocurre
+        socketServer.emit('updateProductsError', { error: 'Failed to fetch products' }); // Envía un error si ocurre
     }
     });
     
     socket.on('getCarts', async () => {
         try {
             const carts = await cartModel.find();
-            socket.emit('updateCarts', carts); // Envía los carritos de vuelta al cliente con un evento personalizado
+            socketServer.emit('updateCarts', carts); // Envía los carritos de vuelta al cliente con un evento personalizado
         } catch (error) {
             console.error('Error fetching carts:', error);
-            socket.emit('updateCartsError', { error: 'Failed to fetch carts' }); 
+            socketServer.emit('updateCartsError', { error: 'Failed to fetch carts' }); 
         }
     });
     
     socket.on('createCart', async () => {
         const newCart = new cartModel({ products: [] });
         await newCart.save();
-        socketServer.emit('updateCarts', await cartModel.find());
+        const carts = await cartModel.find();
+        socketServer.emit('updateCarts', carts);
     });
 
     socket.on('emptyCart', async (cartId) => {
@@ -81,31 +82,33 @@ socketServer.on('connection', (socket) => {
         if (cart) {
             cart.products = [];
             await cart.save();
-            socketServer.emit('updateCarts', await cartModel.find());
+            const carts = await cartModel.find();
+            socketServer.emit('updateCarts', carts);
         }
     });
 
     socket.on('deleteCart', async (cartId) => {
         await cartModel.findByIdAndDelete(cartId);
-        socketServer.emit('updateCarts', await cartModel.find());
+        const carts = await cartModel.find();
+        socketServer.emit('updateCarts', carts);
     });
 
     socket.on('addProduct', async (productData, callback) => {
-            const newProduct = new productModel(productData);
-            await newProduct.save();
-            
-            callback({ success: true });
-            socketServer.emit('updateProducts', await productModel.find()); 
+        const newProduct = new productModel(productData);
+        await newProduct.save();
+        
+        callback({ success: true });
+        socketServer.emit('productListUpdated', await productModel.find()); // Emite el evento para actualización de productos
     });
 
     socket.on('updateProduct', async (productData) => {
         await productModel.findByIdAndUpdate(productData.id, productData, { new: true });
-        socketServer.emit('updateProducts', await productModel.find());
+        socketServer.emit('productListUpdated', await productModel.find()); // Emite el evento para actualización de productos
     });
 
     socket.on('deleteProduct', async (productId) => {
         await productModel.findByIdAndDelete(productId);
-        socketServer.emit('updateProducts', await productModel.find());
+        socketServer.emit('productListUpdated', await productModel.find()); // Emite el evento para actualización de productos
     });
 
     socket.on('addProductToCart', async ({ cartId, productId }, callback) => {

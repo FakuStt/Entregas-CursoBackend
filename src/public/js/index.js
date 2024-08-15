@@ -1,16 +1,20 @@
 const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("El DOM esta cargado");
+    console.log("El DOM está cargado");
 
     setupAddProductButton();
-
     crearCart();
+
+    // Solicitar productos y carritos al cargar la página
+    getProducts();
+    getCarts();
 });
 
 async function getCarts() {
     try {
-        const carts = await cartModel.find();
+        const response = await fetch('/api/carts'); // Cambia la URL según tu configuración de API
+        const carts = await response.json();
         socket.emit('updateCarts', carts); // Envía los carritos de vuelta al cliente con un evento personalizado
     } catch (error) {
         console.error('Error fetching carts:', error);
@@ -20,16 +24,20 @@ async function getCarts() {
 
 // Renderizar carritos
 function renderCarts(carts) {
-    socket.emit('getCarts');
+    const cartContainer = document.getElementById('cartContainer');
+    if (cartContainer) {
+        cartContainer.innerHTML = ''; // Limpiar el contenedor
+        carts.forEach(cart => {
+            // Asumiendo que tienes una función para crear el HTML del carrito
+            cartContainer.innerHTML += createCartHTML(cart);
+        });
+    }
 }
-
 
 // Solicitar productos
 function getProducts() {
     socket.emit('getProducts');
 }
-
-
 
 // Crear nuevo carrito
 function crearCart() {
@@ -266,23 +274,24 @@ function setupAddProductButton() {
     }
 }
 
-
 // Socket.io listeners
 socket.on('productListUpdated', (products) => {
-    renderProducts(products);
+    // Recargar la página para reflejar los cambios
+    location.reload();
 });
 
 socket.on('cartListUpdated', (carts) => {
-    renderCarts(carts);
+    // Recargar la página para reflejar los cambios
+    location.reload();
 });
 
 socket.on('errorMessage', (message) => {
     Swal.fire('Error', message, 'error');
 });
 
-// Inicializar solicitudes
-getProducts();
-getCarts();
+
+
+
 
 
 
