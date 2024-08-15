@@ -9,14 +9,20 @@
 </head>
 <body>
     <h1>Lista de Productos en Tiempo Real</h1>
-    <h1>Productos</h1>
     <ul>
-        {{#each docs}}
-            <li><p>{{this.title}}   -   Precio: {{this.price}}   -   Categoria: {{this.category}}   -   Descripcion: {{description}}   -   Disponibles: {{stock}}</p> </li>
+        <ul>
+    {{#if payload}}
+        {{#each payload}}
+            <li><p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{description}} - Disponibles: {{stock}}</p></li>
             <button onclick="modifyProduct('{{this._id}}')">Modificar</button>
             <button onclick="deleteProduct('{{this._id}}')">Eliminar</button>
             <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
         {{/each}}
+    {{else}}
+        <p>No hay productos disponibles.</p>
+    {{/if}}
+</ul>
+
         <button id="addProductButton">Agregar Nuevo Producto</button>
     </ul>
     <div>

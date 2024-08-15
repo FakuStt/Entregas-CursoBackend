@@ -1,48 +1,49 @@
 import express from 'express';
-import { getProducts } from '../utils.js';
 import productModel from '../models/products.model.js';
+import { getProducts } from '../utils.js';
 
 
 const router = express.Router();
 
 //RUTA DONDE SE MUESTRAN LOS PRODUCTOS AREGADOS HASTA EL MOMENTO
-router.get('/', (req, res) => {
-    res.render('home', { products: getProducts() });
+router.get('/', async(req, res) => {
+        try {
+            const result = await getProducts(req.query);
+            console.log(result.docs)
+
+            res.render('home', { 
+            payload: result.docs,
+            totalPages: result.totalPages,
+            page: result.page,
+            hasPrevPage: result.hasPrevPage,
+            hasNextPage: result.hasNextPage,
+            prevLink: result.prevLink = result.hasPrevPage ? `http://localhost:8080/home?page=${result.prevPage}` : null,
+            nextLink: result.nextLink = result.hasNextPage ? `http://localhost:8080/home?page=${result.nextPage}` : null,
+            isValid: result.docs.length > 0 
+        });
+        }catch (error) {
+        console.error(`Error al obtener productos: ${error.message}`);
+        res.status(500).send('Error al obtener productos');
+    }
 });
 
 //RUTA DONDE SE MUESTRAN LOS PRODUCTOS ACTUALIZADOS EN TIEMPO REAL
 router.get('/realtimeproducts', async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit, 10) || 10;
-        const page = parseInt(req.query.page, 10) || 1;
-        const sort = req.query.sort || 'asc'; // Valor por defecto
-        const query = req.query.query || '';
-
-        let queryObject = {};
-        if (query) {
-            queryObject.category = { $regex: query, $options: 'i' };
-        }
-
-        let sortOptions = {};
-        if (sort === 'asc') {
-            sortOptions = { price: 1 };
-        } else if (sort === 'desc') {
-            sortOptions = { price: -1 };
-        }
-
-
-        const options = {
-            limit: limit,
-            page: page,
-            sort: sortOptions
-        };
-
-        const result = await productModel.paginate(queryObject, options);
-
-        result.prevLink = result.hasPrevPage ? `/realtimeproducts?page=${result.prevPage}&limit=${limit}&sort=${sort}&query=${query}` : null;
-        result.nextLink = result.hasNextPage ? `/realtimeproducts?page=${result.nextPage}&limit=${limit}&sort=${sort}&query=${query}` : null;
+        const result = await getProducts(req.query);
         console.log(result.docs)
-        res.render('realtimeproducts', { docs: result.docs, prevLink: result.prevLink, nextLink: result.nextLink });
+
+        res.render('realtimeproducts', { 
+            payload: result.docs,
+            totalPages: result.totalPages,
+            page: result.page,
+            hasPrevPage: result.hasPrevPage,
+            hasNextPage: result.hasNextPage,
+            prevLink: result.prevLink = result.hasPrevPage ? `http://localhost:8080/realtimeproducts?page=${result.prevPage}` : null,
+            nextLink: result.nextLink = result.hasNextPage ? `http://localhost:8080/realtimeproducts?page=${result.nextPage}` : null,
+            isValid: result.docs.length > 0 
+        });
+
     } catch (error) {
         console.error(`Error al obtener productos: ${error.message}`);
         res.status(500).send('Error al obtener productos');

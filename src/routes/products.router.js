@@ -1,5 +1,6 @@
 import { Router } from "express";
 import productModel from "../models/products.model.js";
+import { getProducts } from "../utils.js";
 
 const router = Router();
 
@@ -7,24 +8,7 @@ const router = Router();
 router.get('/', async(req, res) => {
     try{
 
-        const limit = parseInt(req.query.limit,10) || 10
-        const page = parseInt(req.query.page,10) || 1
-        const sort = req.query.sort || ''
-        const query = req.query.query || ''
-
-        let queryObject = {}
-
-        if(query){
-            queryObject.category = { $regex: query, $options: 'i' }
-        }
-
-        const options = {
-            limit : limit,
-            page : page,
-            sort : sort
-        }
-
-        const result = await productModel.paginate(queryObject, options);
+        const result = await getProducts(req.query)
 
         res.status(200).json({
             status: 'success',
