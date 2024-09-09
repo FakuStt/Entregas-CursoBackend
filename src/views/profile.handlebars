@@ -1,8 +1,8 @@
 <h2>Perfil de Usuario</h2>
-<p>Nombre: {{first_name}}</p>
-<p>Apellido: {{last_name}}</p>
-<p>Email: {{email}}</p>
-<p>Edad: {{age}}</p>
+<p>Nombre: {{user.first_name}}</p>
+<p>Apellido: {{user.last_name}}</p>
+<p>Email: {{user.email}}</p>
+<p>Edad: {{user.age}}</p>
 
 <a href="/reset-password">Cambiar Contraseña</a>
 <form action="/api/sessions/logout" method="POST">

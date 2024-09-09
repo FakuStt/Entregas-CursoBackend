@@ -5,6 +5,8 @@ import passport from "passport";
 
 const router = express.Router()
 
+
+/*
 router.post('/register', passport.authenticate('register',{failureRedirect: '/failregister'}) ,async (req, res) => {
     res.send({status: "success", message: "Usuario registrado"})
 });
@@ -57,6 +59,12 @@ router.post('/logout', (req, res) => {
         res.redirect('/login');
     });
 });
+*/
 
+router.get('/github', passport.authenticate('github', {scope: ['user: email']}), async (req,res)=>{})
+router.get('/githubcallback', passport.authenticate('github', {failureRedirect: '/login'}), async (req,res)=>{
+    req.session.user=req.user
+    res.redirect('/')
+})
 
 export default router

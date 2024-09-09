@@ -7,6 +7,7 @@ import { isAuthenticated, isNotAuthenticated } from '../middleware/auth.js';
 
 const router = Router();
 
+/*
 //RUTA DONDE SE MUESTRAN LOS PRODUCTOS AREGADOS HASTA EL MOMENTO
 router.get('/', async(req, res) => {
         try {
@@ -68,6 +69,14 @@ router.get('/reset-password', isNotAuthenticated, (req,res)=> {
 
 router.get('/profile', isAuthenticated, (req, res) => {
     res.render('profile', { user: req.session.user });
-});
+}); */
+
+router.get('/', async (req,res)=>{
+    res.render('profile')
+})
+
+router.get('/login', async (req,res)=>{
+    res.render('login')
+})
 
 export default router;

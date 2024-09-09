@@ -12,6 +12,7 @@ import MongoStore from "connect-mongo";
 import bodyParser from "body-parser";
 import passport from "passport";
 import initializePassport from "./config/passport.config.js";
+import {generateToken, authToken} from "./utils.js"
 
 // Importar rutas y modelos
 import cartRoute from "./routes/cart.router.js";
@@ -75,6 +76,37 @@ app.use("/api/products", productsRoute);
 app.use("/", viewsRoute);
 app.use("/api/sessions", sessionsRoute);
 
+
+let users = []
+app.post('/register', (req,res)=> {
+    const {name, email, password} = req.body
+    const exists = users.find(user => user.email === email)
+    if(exists){
+        res.status(400).send({error: "usuario ya registrado"})
+    }
+    const user = {
+        name,
+        email,
+        password
+    }
+    users.push(user)
+    const access_token = generateToken(user)
+    res.status(201).send({access_token})
+    console.log(users)
+})
+
+app.post('/login', (req,res)=>{
+    const {email, password} = req.body
+    const user = users.find(user => user.email === email)
+    if (!user) return res.status(400),send({error: "Usuario no registrado"})
+    const access_token = generateToken(user)
+    res.status(200).send({access_token})
+    console.log(users)
+})
+
+app.get("/current", authToken,(req,res)=>{
+    res.send({status: "success", payload: req.user})
+})
 
 /* SESSION - CODIGO
 
