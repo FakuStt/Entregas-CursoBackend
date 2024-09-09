@@ -60,23 +60,20 @@ router.post('/', async(req, res) => {
             return res.status(400).json({ msg: "Todos los campos son requeridos" });
         }
 
-        // Crear un nuevo documento de producto utilizando el modelo de Mongoose
-        const newProduct = new productModel({
+        const newProduct = await productModel.create({
             title: title || "New Product",
             description: description || "New Description",
             code: code || "New code",
             price: price || 0,
-            status: status !== undefined ? status : true, // Considerar `false` como valor válido
+            status: status !== undefined ? status : true,
             stock: stock || 0,
             category: category || null,
             thumbnails: thumbnails || null
         });
 
-        // Guardar el nuevo producto en la base de datos
-        await newProduct.save();
-
-        // Enviar una respuesta de éxito
-        res.status(200).json({ msg: "Producto agregado con éxito", product: newProduct });
+        const products = await productModel.find().lean();
+        socketServer.emit('updatedProducts', products);
+        res.status(200).json(newProduct);
     } catch (error) {
         console.error(error);
         res.status(500).json({ msg: "Error al agregar el producto", error: error.message });

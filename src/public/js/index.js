@@ -1,16 +1,19 @@
+// Conexión y desconexión de Socket.io
 const socket = io();
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log("El DOM está cargado");
+socket.on('connect', () => console.log('Conectado al servidor'));
+socket.on('disconnect', () => console.log('Desconectado del servidor'));
 
+// Inicialización del DOM
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('El DOM está cargado');
     setupAddProductButton();
     crearCart();
-
-    // Solicitar productos y carritos al cargar la página
     getProducts();
     getCarts();
 });
 
+// Solicitar y manejar carritos
 async function getCarts() {
     try {
         const response = await fetch('/api/carts'); // Cambia la URL según tu configuración de API
@@ -22,7 +25,6 @@ async function getCarts() {
     }
 }
 
-// Renderizar carritos
 function renderCarts(carts) {
     const cartContainer = document.getElementById('cartContainer');
     if (cartContainer) {
@@ -47,6 +49,20 @@ function crearCart() {
             socket.emit('createCart');
         });
     }
+}
+
+// Confirmación y acciones de carritos y productos
+function confirmAction(title, text, confirmText, callback) {
+    Swal.fire({
+        title,
+        text,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: confirmText,
+        cancelButtonText: 'Cancelar'
+    }).then(result => {
+        if (result.isConfirmed) callback();
+    });
 }
 
 // Vaciar carrito
@@ -90,7 +106,7 @@ function addProductToCart(productID) {
         showCancelButton: true,
         confirmButtonText: 'Agregar',
         cancelButtonText: 'Cancelar'
-    }).then((result) => {
+    }).then(result => {
         if (result.isConfirmed) {
             const enteredCartID = result.value;
             if (enteredCartID) {
@@ -106,6 +122,7 @@ function addProductToCart(productID) {
 }
 
 // Modificar producto
+
 function modifyProduct(productID) {
     Swal.fire({
         title: 'Modifica los datos del producto:',
@@ -159,61 +176,44 @@ function modifyProduct(productID) {
     });
 }
 
+
 // Eliminar producto
 function deleteProduct(productID) {
-    Swal.fire({
-        title: '¿Estás seguro de que deseas eliminar este producto?',
-        text: "Esta acción eliminará el producto permanentemente.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            socket.emit('deleteProduct', productID);
-        }
-    });
+    confirmAction(
+        '¿Estás seguro de que deseas eliminar este producto?',
+        'Esta acción eliminará el producto permanentemente.',
+        'Sí, eliminar',
+        () => socket.emit('deleteProduct', productID)
+    );
 }
 
 // Modificar cantidad de producto en carrito
 function modifyProductQuantity(cartID, productID) {
     Swal.fire({
         title: 'Modificar cantidad del producto en el carrito',
-        html: `
-            <input id="quantity" class="swal2-input" type="number" placeholder="Cantidad">
-        `,
+        html: '<input id="quantity" class="swal2-input" type="number" placeholder="Cantidad">',
         focusConfirm: false,
         preConfirm: () => {
-            const quantity = document.getElementById('quantity').value;
-
-            if (!quantity || quantity <= 0) {
+            const quantity = parseInt(document.getElementById('quantity').value, 10);
+            if (quantity <= 0) {
                 Swal.showValidationMessage('La cantidad debe ser mayor que 0.');
                 return false;
             }
-
-            return {
-                cartId: cartID,
-                productId: productID,
-                quantity: parseInt(quantity, 10)
-            };
+            return { cartId: cartID, productId: productID, quantity };
         }
-    }).then((result) => {
+    }).then(result => {
         if (result.isConfirmed) {
-            const data = result.value;
-            socket.emit('updateProductQuantity', data);
+            socket.emit('updateProductQuantity', result.value);
             Swal.fire('Cantidad actualizada', 'La cantidad del producto en el carrito ha sido actualizada', 'success');
         }
     });
 }
 
-// Agregar nuevo producto
+// Configurar botón para agregar producto
 function setupAddProductButton() {
     const addProductButton = document.getElementById('addProductButton');
-    
     if (addProductButton) {
-        console.log('Botón encontrado');
         addProductButton.addEventListener('click', () => {
-            console.log('Botón clickeado');
             Swal.fire({
                 title: 'Agregar un nuevo producto',
                 html: `
@@ -231,40 +231,30 @@ function setupAddProductButton() {
                 `,
                 focusConfirm: false,
                 preConfirm: () => {
-                    const title = document.getElementById('title').value.trim();
-                    const description = document.getElementById('description').value.trim();
-                    const price = document.getElementById('price').value.trim();
-                    const code = document.getElementById('code').value.trim();
-                    const stock = document.getElementById('stock').value.trim();
-                    const status = document.getElementById('status').value === 'true';
-                    const category = document.getElementById('category').value.trim();
-                    const thumbnails = document.getElementById('thumbnails').value.trim();
-
-                    if (!title || !description || !price || !code || !stock || !category || !thumbnails) {
+                    const product = {
+                        title: document.getElementById('title').value.trim(),
+                        description: document.getElementById('description').value.trim(),
+                        price: parseFloat(document.getElementById('price').value.trim()),
+                        code: document.getElementById('code').value.trim(),
+                        stock: parseInt(document.getElementById('stock').value.trim(), 10),
+                        status: document.getElementById('status').value === 'true',
+                        category: document.getElementById('category').value.trim(),
+                        thumbnails: document.getElementById('thumbnails').value.trim()
+                    };
+                    if (Object.values(product).some(val => !val)) {
                         Swal.showValidationMessage('Todos los campos son obligatorios.');
                         return false;
                     }
-
-                    return {
-                        title,
-                        description,
-                        price: parseFloat(price),
-                        code,
-                        stock: parseInt(stock, 10),
-                        status,
-                        category,
-                        thumbnails
-                    };
+                    return product;
                 }
-            }).then((result) => {
+            }).then(result => {
                 if (result.isConfirmed) {
-                    const newProduct = result.value;
-                    socket.emit('addProduct', newProduct, (response) => {
-                        if (response.success) {
-                            Swal.fire('Producto agregado', 'El nuevo producto ha sido agregado exitosamente', 'success');
-                        } else {
-                            Swal.fire('Error', response.message || 'Hubo un problema al agregar el producto', 'error');
-                        }
+                    socket.emit('addProduct', result.value, response => {
+                        Swal.fire(
+                            response.success ? 'Producto agregado' : 'Error',
+                            response.success ? 'El nuevo producto ha sido agregado exitosamente' : response.message || 'Hubo un problema al agregar el producto',
+                            response.success ? 'success' : 'error'
+                        );
                     });
                 }
             });
@@ -275,19 +265,17 @@ function setupAddProductButton() {
 }
 
 // Socket.io listeners
-socket.on('productListUpdated', (products) => {
-    // Recargar la página para reflejar los cambios
-    location.reload();
+socket.on('productListUpdated', () => location.reload());
+socket.on('cartListUpdated', () => location.reload());
+socket.on('updateCarts', (carts) => {
+    renderCarts(carts);
 });
-
 socket.on('cartListUpdated', (carts) => {
-    // Recargar la página para reflejar los cambios
-    location.reload();
+    // Actualiza la lista de carritos
+    renderCarts(carts);
 });
+socket.on('errorMessage', message => Swal.fire('Error', message, 'error'));
 
-socket.on('errorMessage', (message) => {
-    Swal.fire('Error', message, 'error');
-});
 
 
 

@@ -1,10 +1,11 @@
-import express from 'express';
+import { Router } from 'express';
 import productModel from '../models/products.model.js';
 import { getProducts } from '../utils.js';
 import cartModel from '../models/cart.model.js';
+import { isAuthenticated, isNotAuthenticated } from '../middleware/auth.js';
 
 
-const router = express.Router();
+const router = Router();
 
 //RUTA DONDE SE MUESTRAN LOS PRODUCTOS AREGADOS HASTA EL MOMENTO
 router.get('/', async(req, res) => {
@@ -53,9 +54,16 @@ router.get('/realtimeproducts', async (req, res) => {
     }
 });
 
+router.get('/login', isNotAuthenticated, (req, res) => {
+    res.render('login');
+});
 
+router.get('/register', isNotAuthenticated, (req, res) => {
+    res.render('register');
+});
 
-
-
+router.get('/profile', isAuthenticated, (req, res) => {
+    res.render('profile', { user: req.session.user });
+});
 
 export default router;
