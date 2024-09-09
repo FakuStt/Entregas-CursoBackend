@@ -1,0 +1,1 @@
+//aqui iria la configuracion de mongoose

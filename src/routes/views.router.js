@@ -62,6 +62,10 @@ router.get('/register', isNotAuthenticated, (req, res) => {
     res.render('register');
 });
 
+router.get('/reset-password', isNotAuthenticated, (req,res)=> {
+    res.render('resetPassword')
+} )
+
 router.get('/profile', isAuthenticated, (req, res) => {
     res.render('profile', { user: req.session.user });
 });

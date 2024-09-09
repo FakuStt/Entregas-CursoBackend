@@ -9,7 +9,9 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import FileStore from "session-file-store";
 import MongoStore from "connect-mongo";
-import bodyParser from "body-parser"
+import bodyParser from "body-parser";
+import passport from "passport";
+import initializePassport from "./config/passport.config.js";
 
 // Importar rutas y modelos
 import cartRoute from "./routes/cart.router.js";
@@ -44,6 +46,10 @@ app.use(session({
         mongoUrl: "mongodb+srv://facu12345:facu12345@cluster0.0zg4wjj.mongodb.net/coderbase?retryWrites=true&w=majority&appName=Cluster0"
     }),
 }))
+
+initializePassport()
+app.use(passport.initialize())
+app.use(passport.session())
 
 
 // Conectar a la base de datos
