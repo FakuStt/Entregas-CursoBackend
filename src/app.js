@@ -4,15 +4,14 @@ import handlebars from "express-handlebars";
 import http from "http";
 import path from 'path';
 import { fileURLToPath } from 'url';
-import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import FileStore from "session-file-store";
 import MongoStore from "connect-mongo";
 import bodyParser from "body-parser";
 import passport from "passport";
 import initializePassport from "./config/passport.config.js";
-import {generateToken, authToken} from "./utils.js"
+import db from "./config/database.js";
+import dotenv from "dotenv"
 
 // Importar rutas y modelos
 import cartRoute from "./routes/cart.router.js";
@@ -21,20 +20,19 @@ import viewsRoute from "./routes/views.router.js";
 import sessionsRoute from "./routes/sessions.js";
 import cartModel from "./models/cart.model.js";
 import productModel from "./models/products.model.js";
-import { agregarCarrito } from "./utils.js";
-import { getProducts } from "./utils.js";
 
 
-// const fileStorage = FileStore(session) NO SE USA, PASAMOS A GUADRAR LAS SESSION EN MONGODB
-
+dotenv.config();
 // Resolver __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT;
 
 // Middleware para parseo de JSON y datos de formularios
+app.use(express.json());
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -44,7 +42,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     store: MongoStore.create({
-        mongoUrl: "mongodb+srv://facu12345:facu12345@cluster0.0zg4wjj.mongodb.net/coderbase?retryWrites=true&w=majority&appName=Cluster0"
+        mongoUrl: process.env.MONGO_URL
     }),
 }))
 
@@ -53,12 +51,6 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 
-// Conectar a la base de datos
-mongoose.connect("mongodb+srv://facu12345:facu12345@cluster0.0zg4wjj.mongodb.net/coderbase?retryWrites=true&w=majority&appName=Cluster0")
-    .then(() => console.log("Conectado a la DB"))
-    .catch(error => console.error("No se pudo conectar a la DB", error));
-
-//app.engine('handlebars', handlebars.engine());
 app.engine('handlebars', handlebars.engine({
     extname: '.handlebars',
     defaultLayout: 'main',
@@ -75,96 +67,6 @@ app.use("/api/carts", cartRoute);
 app.use("/api/products", productsRoute);
 app.use("/", viewsRoute);
 app.use("/api/sessions", sessionsRoute);
-
-
-let users = []
-app.post('/register', (req,res)=> {
-    const {name, email, password} = req.body
-    const exists = users.find(user => user.email === email)
-    if(exists){
-        res.status(400).send({error: "usuario ya registrado"})
-    }
-    const user = {
-        name,
-        email,
-        password
-    }
-    users.push(user)
-    const access_token = generateToken(user)
-    res.status(201).send({access_token})
-    console.log(users)
-})
-
-app.post('/login', (req,res)=>{
-    const {email, password} = req.body
-    const user = users.find(user => user.email === email)
-    if (!user) return res.status(400),send({error: "Usuario no registrado"})
-    const access_token = generateToken(user)
-    res.status(200).send({access_token})
-    console.log(users)
-})
-
-app.get("/current", authToken,(req,res)=>{
-    res.send({status: "success", payload: req.user})
-})
-
-/* SESSION - CODIGO
-
-    
-    app.get('/', (req,res)=>{
-        if(req.session.views){
-            req.session.counter++;
-            res.send(`Se ha visitado el sitio ${req.session.views} veces`)
-        }else{
-            req.session.views = 1;
-            res.send(`<p>Visitas: ${req.session.views}</p>`)
-        }
-    })
-
-   app.get('/session', (req,res)=>{
-    if(req.session.counter){
-        req.session.counter++;
-        res.send(`Se ha visitado el sitio ${req.session.counter} veces`)
-    }else{
-        req.session.counter = 1;
-        res.send(`Bienvenido`)
-    }
-})
-
-app.get('/logout', (req,res)=>{
-    req.session.destroy(err => {
-        if (!err){
-            res.clearCookie("connect.sid");
-            res.send("Logout OK");
-        } else {
-            res.send({status: "Error al intentar salir", body: err})
-        }
-    })
-})
-
-app.get('/login',(req,res)=>{
-    const {user, password} = req.query
-    if(user !== "coder" || password !== "house"){
-        res.send("Usuario o contrase'a incorrecta")
-    } else{
-        req.session.user = user;
-        req.session.admin = true;
-        res.send("Login OK")
-    }
-})
-
-function auth(req,res,next){
-    if (req.session?.user === "coder" && req.session?.admin){
-        return next()
-    } else{
-        res.send("No estas autorizado")
-    }
-}
-
-app.get('/privado', auth, (req,res)=>{
-    res.send("Bienvenido a la seccion privada")
-}) */
-
 
 // Configuración de servidor HTTP y Socket.io
 const httpServer = http.createServer(app);

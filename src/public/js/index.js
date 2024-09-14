@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // Solicitar y manejar carritos
 async function getCarts() {
     try {
-        const response = await fetch('/api/carts'); // Cambia la URL según tu configuración de API
+        const response = await fetch('/api/carts');
         const carts = await response.json();
-        socket.emit('updateCarts', carts); // Envía los carritos de vuelta al cliente con un evento personalizado
+        socket.emit('updateCarts', carts); 
     } catch (error) {
         console.error('Error fetching carts:', error);
         socket.emit('updateCartsError', { error: 'Failed to fetch carts' }); 
@@ -28,9 +28,8 @@ async function getCarts() {
 function renderCarts(carts) {
     const cartContainer = document.getElementById('cartContainer');
     if (cartContainer) {
-        cartContainer.innerHTML = ''; // Limpiar el contenedor
+        cartContainer.innerHTML = ''; 
         carts.forEach(cart => {
-            // Asumiendo que tienes una función para crear el HTML del carrito
             cartContainer.innerHTML += createCartHTML(cart);
         });
     }
