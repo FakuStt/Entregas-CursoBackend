@@ -11,30 +11,31 @@ const JWTStrategy = jwt.Strategy;
 const ExtractJWT = jwt.ExtractJwt;
 
 
-const cookieExtractor=(req)=>{
+const cookieExtractor = (req) => {
     let token = null;
-    console.log(req.headers);
-    if (req && req.headers && req.headers.authorization) {
-        const authHeader = req.headers.authorization;
-        if (authHeader.startsWith('Bearer ')) {
-            token = authHeader.split(' ')[1];
-        }
+    if (req && req.cookies) {
+        token = req.cookies['jwt']; // Nombre de la cookie que contiene el token
     }
+    console.log('Token extraído de la cookie:', token);
     return token;
-}
+};
 
 const initializePassport=()=>{
 
     passport.use('jwt', new JWTStrategy({
-        jwtFromRequest:ExtractJWT.fromExtractors([cookieExtractor]),
+        jwtFromRequest: ExtractJWT.fromExtractors([cookieExtractor]),
         secretOrKey: PRIVATE_KEY
     }, async(jwt_payload, done)=>{
         try {
-            const user = await userModel.findById(jwt_payload.id);
+            const user = await userModel.findById(jwt_payload.user._id);
             if (user) {
                 return done(null, user);
+            }else {
+                console.log('Usuario no encontrado en la base de datos');
+                return done(null, false); // Usuario no encontrado
             }
         } catch (error) {
+            console.error('Error en la verificación del JWT:', error);
             return done(error)
         }
     }))

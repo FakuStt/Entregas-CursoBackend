@@ -16,7 +16,7 @@ router.post('/register', async (req,res)=> {
         if (!first_name || !last_name || !email || !age || !password) {
             return res.status(400).json({ msg: "Todos los campos son requeridos" });
         }
-        let exists = userModel.findOne({ email })
+        let exists = await userModel.findOne({ email })
         if(exists){
             res.status(400).send({error: "Usuario ya registrado"})
         }
@@ -53,11 +53,11 @@ router.post('/login', async (req, res) => {
             if(!email || !password) {
                 return res.status(400).json({ msg: "Todos los campos son requeridos" });
             }
-            const user = userModel.findOne({email: email})
+            const user = await userModel.findOne({email})
             if (!user) return res.status(400).send({status: "error", error: "Usuario o constrase'a incorrecta"});
      
             
-            if(!isValidPassword(user, user.password)) return res.status(400).send({status: "error", error: "Usuario o contrase;a incorrecta"});
+            if(!isValidPassword(user, password)) return res.status(400).send({status: "error", error: "Usuario o contrase;a incorrecta"});
             const access_token = generateToken(user)
             res.cookie("jwt", access_token, {httpOnly: true, secure: false})
             return res.redirect('/profile')
@@ -92,12 +92,12 @@ router.post('/reset-password', async (req, res) => {
     }
 });
 
-router.get('/profile', passportCall('jwt'), async(req,res) => {
+router.get('/profile', passport.authenticate("jwt", {session: false}), async(req,res) => {
     try {
-        const user = userModel.findById(user._id)
+        const user = await userModel.findById(req.user._id)
         if(!user) return res.status(400).send({err: "No se ha encontrado el usuario"})
          
-        res.send({first_name: user.first_name, last_name: user.last_name, age: user.age, email: user.email, role: user.role || user})
+        res.send({first_name: user.first_name, last_name: user.last_name, age: user.age, email: user.email, role: user.role || "user"})
     } catch (error) {
         console.log(error)
         res.status(500).send({status: "error", error: "Error al intentar acceder a datos de usuario"})

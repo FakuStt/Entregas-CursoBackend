@@ -2,7 +2,9 @@ import { Router } from 'express';
 import productModel from '../models/products.model.js';
 import { getProducts } from '../utils.js';
 import cartModel from '../models/cart.model.js';
+import passport from 'passport';
 import { isAuthenticated, isNotAuthenticated } from '../middleware/auth.js';
+import userModel from '../models/user.model.js';
 
 
 const router = Router();
@@ -65,6 +67,7 @@ router.get('/register', isNotAuthenticated, (req, res) => {
 
 
 router.get('/profile', isAuthenticated, (req, res) => {
+    console.log(req.user);
     res.render('profile', { user: req.user });
 });
 

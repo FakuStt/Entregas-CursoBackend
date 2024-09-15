@@ -21,35 +21,31 @@ import sessionsRoute from "./routes/sessions.js";
 import cartModel from "./models/cart.model.js";
 import productModel from "./models/products.model.js";
 
-
 dotenv.config();
-// Resolver __dirname
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT;
 
-// Middleware para parseo de JSON y datos de formularios
 app.use(express.json());
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(session({
-    //store: new fileStorage({path:'/session', ttl: 100, retries: 0}),
-    secret: 'secretCoder',
+    secret: process.env.PRIVATE_KEY,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URL
+        mongoUrl: process.env.MONGO_URL,
+        mongoOptions: {},
+        ttl: 500
     }),
 }))
-
-initializePassport()
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize())
 app.use(passport.session())
-
+initializePassport()
 
 app.engine('handlebars', handlebars.engine({
     extname: '.handlebars',
@@ -59,8 +55,6 @@ app.engine('handlebars', handlebars.engine({
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'handlebars');
 
-// Servir archivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Rutas
 app.use("/api/carts", cartRoute);
