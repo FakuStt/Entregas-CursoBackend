@@ -75,7 +75,7 @@ router.get('/faillogin', (req,res)=>{
 router.post('/reset-password', async (req, res) => {
     const { email, password } = req.body;
     try {
-        const user = await User.findOne({ email });
+        const user = await userModel.findOne({ email });
         if (!user) {
             return res.status(400).send({ status: "error", error: "Usuario no encontrado" });
         }
@@ -94,10 +94,11 @@ router.post('/reset-password', async (req, res) => {
 
 router.get('/profile', passport.authenticate("jwt", {session: false}), async(req,res) => {
     try {
-        const user = await userModel.findById(req.user._id)
-        if(!user) return res.status(400).send({err: "No se ha encontrado el usuario"})
-         
-        res.send({first_name: user.first_name, last_name: user.last_name, age: user.age, email: user.email, role: user.role || "user"})
+        console.log(req.user)
+        const user = await userModel.findById(req.user._id).lean()
+        if(!user) return res.status(400).send({err: "No se ha encontrado el usuario"});
+        console.log(user);
+        res.send({user})
     } catch (error) {
         console.log(error)
         res.status(500).send({status: "error", error: "Error al intentar acceder a datos de usuario"})

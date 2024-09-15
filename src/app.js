@@ -50,6 +50,10 @@ initializePassport()
 app.engine('handlebars', handlebars.engine({
     extname: '.handlebars',
     defaultLayout: 'main',
+    runtimeOptions: {
+        allowProtoPropertiesByDefault: true,
+        allowProtoMethodsByDefault: true
+    }
 }))
 
 app.set('views', path.join(__dirname, 'views'));

@@ -27,7 +27,7 @@ const initializePassport=()=>{
         secretOrKey: PRIVATE_KEY
     }, async(jwt_payload, done)=>{
         try {
-            const user = await userModel.findById(jwt_payload.user._id);
+            const user = await userModel.findById(jwt_payload.user._id); 
             if (user) {
                 return done(null, user);
             }else {

@@ -67,12 +67,13 @@ router.get('/register', isNotAuthenticated, (req, res) => {
 
 
 router.get('/profile', isAuthenticated, (req, res) => {
-    console.log(req.user);
-    res.render('profile', { user: req.user });
+    const user = req.user;
+    res.render('profile', {user});
 });
 
 router.get('/reset-password', isAuthenticated, (req,res) => {
-    res.render('reset-password', {user: req.user});
+    const user = req.user
+    res.render('reset-password', {user});
 })
 
 
