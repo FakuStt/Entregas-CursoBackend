@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import productModel from './models/products.model.js';
-import cartModel from './models/cart.model.js';
+import productModel from './dao/models/products.model.js';
+import cartModel from './dao/models/cart.model.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
@@ -14,7 +14,7 @@ const __dirname = dirname(__filename);
 export async function getProducts(reqParams) {
         const limit = parseInt(reqParams.limit) || 10;
         const page = parseInt(reqParams.page, 10) || 1;
-        const sort = reqParams.sort || 'asc'; // Valor por defecto
+        const sort = reqParams.sort || 'asc';
         const query = reqParams.query || '';
 
         let queryObject = {};
@@ -41,8 +41,9 @@ export async function getProducts(reqParams) {
         const result = await productModel.paginate(queryObject, options);
         return result
     } catch (error) {
-        console.error('Error al obtener productoss', error);
-        res.status(500).json({ error: 'No se pueden cargar los productos', err });
+        console.error('Error al obtener productos', error);
+        console.log('No se pueden cargar los productos');
+        return null;
     }
 }
 export async function agregarCarrito({ cartId, productId }, callback){

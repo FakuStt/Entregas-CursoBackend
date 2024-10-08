@@ -7,51 +7,144 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/js/index.js"></script>
+    <style>
+        body {
+            background-color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333; /* Gris oscuro */
+            padding: 10px;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .navbar img {
+            height: 50px;
+            margin-right: 20px;
+            filter: brightness(0.9);
+            cursor: pointer;
+        }
+        .navbar select, .navbar input, .navbar button {
+            margin: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+            background-color: white; /* Fondo blanco */
+            color: black; /* Letras negras */
+        }
+        .navbar button:hover {
+            background-color: #eaeaea;
+        }
+        a {
+            color: #00f;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        button {
+            background-color: #333; /* Fondo gris oscuro */
+            color: white; /* Letras blancas */
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #555; /* Un poco más claro al pasar */
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+        }
+        .content {
+            padding: 20px;
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+        #cart-list {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Lista de Productos en Tiempo Real</h1>
-    <ul>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <img src="logo.png" alt="Logo" onclick="location.href='/'">
+        <select>
+            <option>Filtrar por:</option>
+            <option onclick="location.href='/?sort=desc'">Menor precio</option>
+            <option onclick="location.href='/?sort=asc'">Mayor precio</option>
+        </select>
+        <input type="text" placeholder="Buscar productos...">
+        <button onclick="location.href='/carritos'">Ver Carritos</button>
+        <button onclick="location.href='/perfil'">Visitar Perfil</button>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <h1>Lista de Productos - Admin</h1>
         <ul>
-    {{#if payload}}
-        {{#each payload}}
-            <li><p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{description}} - Disponibles: {{stock}}</p></li>
-            <button onclick="modifyProduct('{{this._id}}')">Modificar</button>
-            <button onclick="deleteProduct('{{this._id}}')">Eliminar</button>
-            <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
-        {{/each}}
-    {{else}}
-        <p>No hay productos disponibles.</p>
-    {{/if}}
-</ul>
+            {{#if payload}}
+                {{#each payload}}
+                    <li><p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{this.description}} - Disponibles: {{this.stock}}</p></li>
+                    <button onclick="modifyProduct('{{this._id}}')">Modificar</button>
+                    <button onclick="deleteProduct('{{this._id}}')">Eliminar</button>
+                    <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
+                {{/each}}
+            {{else}}
+                <p>No hay productos disponibles.</p>
+            {{/if}}
+        </ul>
 
         <button id="addProductButton">Agregar Nuevo Producto</button>
-    </ul>
-    <div>
-        {{#if prevLink}}
-            <a href="{{prevLink}}">Anterior</a>
-        {{/if}}
-        {{#if nextLink}}
-            <a href="{{nextLink}}">Siguiente</a>
-        {{/if}}
+
+        <div>
+            {{#if prevLink}}
+                <a href="{{prevLink}}">Anterior</a>
+            {{/if}}
+            {{#if nextLink}}
+                <a href="{{nextLink}}">Siguiente</a>
+            {{/if}}
+        </div>
+
+        <h2>Carritos Disponibles</h2>
+        <ul id="cart-list">
+            {{#if cart}}
+                {{#each cart}}
+                    <li>
+                        <p>Carrito ID: {{this._id}} Productos: {{this.products.length}}</p>
+                        <button onclick="emptyCart('{{this._id}}')">Vaciar Carrito</button>
+                        <button onclick="deleteCart('{{this._id}}')">Eliminar Carrito</button>
+                    </li>
+                {{/each}}
+            {{else}}
+                <p>No hay carritos disponibles.</p>
+            {{/if}}
+        </ul>
+
+        <button id="crearCartButton">Crear Carrito</button>
     </div>
-    
-    <h2>Carritos Disponibles</h2>
-    <ul id="cart-list">
-        {{#if cart}}
-        {{#each cart}}
-        <li>
-            <p>Carrito ID: {{this._id}} Productos: {{this.products}}</p>
-
-            <button onclick="emptyCart('{{this._id}}')">Vaciar Carrito</button>
-            <button onclick="deleteCart('{{this._id}}')">Eliminar Carrito</button>
-        </li>
-        {{/each}}
-        {{/if}}
-    </ul>
-
-    <button id="crearCartButton">Crear Carrito</button>
 </body>
 </html>
+
 
 
 

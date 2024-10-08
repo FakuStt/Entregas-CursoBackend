@@ -18,8 +18,8 @@ import cartRoute from "./routes/cart.router.js";
 import productsRoute from "./routes/products.router.js";
 import viewsRoute from "./routes/views.router.js";
 import sessionsRoute from "./routes/sessions.js";
-import cartModel from "./models/cart.model.js";
-import productModel from "./models/products.model.js";
+import cartModel from "./dao/models/cart.model.js";
+import productModel from "./dao/models/products.model.js";
 
 dotenv.config();
 

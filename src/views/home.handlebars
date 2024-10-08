@@ -3,24 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Products - User</title>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/index.js"></script>
+    <style>
+        body {
+            background-color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333; /* Gris oscuro */
+            padding: 10px;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .navbar img {
+            height: 50px; /* Ajusta el tamaño del logo */
+            margin-right: 20px;
+            filter: brightness(0.9); /* Logo gris claro */
+            cursor: pointer;
+        }
+        .navbar select, .navbar input, .navbar button {
+            margin: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        .navbar button {
+            background-color: white; /* Fondo blanco para botones del navbar */
+            color: black; /* Letras negras */
+            cursor: pointer;
+        }
+        .navbar button:hover {
+            background-color: #ddd; /* Color al pasar el ratón */
+        }
+        #product-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 20px;
+            width: 100%; /* Full width for products */
+        }
+        #product-list li {
+            list-style-type: none;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            background-color: #f9f9f9; /* Fondo de productos */
+        }
+        #product-list img {
+            max-width: 100%;
+            height: 150px; /* Tamaño fijo para las imágenes */
+            border-radius: 8px;
+        }
+        #cart-container {
+            position: fixed;
+            right: 0; /* Mueve la barra de carritos a la derecha */
+            top: 60px; /* Position it below the navbar */
+            width: 300px; /* Aumenta el ancho de la barra de carritos */
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: none; /* Initially hidden */
+            z-index: 100; /* Make sure it is above other elements */
+            overflow-y: auto; /* Permitir scroll vertical */
+            max-height: 90%; /* Asegura que no ocupe toda la altura de la pantalla */
+        }
+        #cart-list {
+            padding: 10px;
+            display: flex;
+            flex-direction: column; /* Vertical layout */
+        }
+        #cart-list li {
+            list-style-type: none;
+            padding: 5px;
+            margin-bottom: 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #cart-list .cart-buttons {
+            display: flex;
+            justify-content: space-between; /* Distribuye los botones */
+        }
+        button {
+            background-color: #333; /* Fondo gris oscuro para otros botones */
+            color: white; /* Letras blancas */
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none; /* Elimina el borde por defecto */
+        }
+        button:hover {
+            background-color: #444; /* Color al pasar el ratón */
+        }
+        .hidden {
+            display: none;
+        }
+        #cart-toggle {
+            background-color: white; /* Fondo blanco para el botón de ver carritos */
+            color: black; /* Letras negras */
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #cart-container h3 {
+            text-align: center; /* Centra el encabezado de Carritos */
+            margin: 0; /* Elimina el margen */
+            padding: 10px 0; /* Añade espacio alrededor del texto */
+        }
+    </style>
 </head>
 <body>
-    <h1>Lista de Productos</h1>
+    <div class="navbar">
+        <img src="logo.png" alt="Logo" onclick="location.href='/'">
+        <select id="filterSelect">
+            <option value="">Filtrar por:</option>
+            <option value="desc">Menor precio</option>
+            <option value="asc">Mayor precio</option>
+            <option value="available">Disponible</option>
+        </select>
+        <input type="text" placeholder="Buscar productos...">
+        <button id="cart-toggle" onclick="toggleCart()">Ver Carritos</button>
+        <button onclick="location.href='/profile'">Visitar Perfil</button>
+    </div>
+
+    <h1>Lista de Productos - Usuario</h1>
     <ul id="product-list">
         {{#if payload}}
-        {{#each payload}}
-            <li><p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{description}} - Disponibles: {{stock}}</p></li>
-        {{/each}}
+            {{#each payload}}
+                <li>
+                    <img src="https://via.placeholder.com/150" alt="Producto" /> <!-- Imagen predeterminada -->
+                    <p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{description}} - Disponibles: {{stock}}</p>
+                    <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
+                    <button onclick="visitProduct('{{this._id}}')">Visitar Producto</button>
+                </li>
+            {{/each}}
         {{else}}
-        <p>No hay productos disponibles.</p>
+            <p>No hay productos disponibles.</p>
         {{/if}}
     </ul>
 
-    
+    <div>
+        {{#if prevLink}}
+            <a href="{{prevLink}}">Anterior</a>
+        {{/if}}
+        {{#if nextLink}}
+            <a href="{{nextLink}}">Siguiente</a>
+        {{/if}}
+    </div>
+
+    <div id="cart-container">
+        <h3>Carritos</h3>
+        <ul id="cart-list">
+            {{#if cart}}
+                {{#each cart}}
+                    <li>
+                        <p>Carrito ID: {{this._id}} - Productos: {{this.products.length}}</p>
+                        <div class="cart-buttons">
+                            <button onclick="visitCart('{{this._id}}')">Visitar Detalle</button>
+                            <button onclick="emptyCart('{{this._id}}')">Vaciar Carrito</button>
+                            <button onclick="deleteCart('{{this._id}}')">Eliminar Carrito</button>
+                        </div>
+                    </li>
+                {{/each}}
+            {{else}}
+                <p>No hay carritos disponibles.</p>
+            {{/if}}
+            <button id="crearCartButton">Crear Carrito</button>
+        </ul>
+    </div>
+
+    <script>
+        function toggleCart() {
+            const cartList = document.getElementById('cart-container');
+            if (cartList.style.display === "none" || cartList.style.display === "") {
+                cartList.style.display = "block";
+            } else {
+                cartList.style.display = "none";
+            }
+        }
+        document.getElementById('filterSelect').addEventListener('change', function() {
+        const selectedValue = this.value;
+
+        if (selectedValue === 'desc') {
+            location.href = '/?sort=desc';
+        } else if (selectedValue === 'asc') {
+            location.href = '/?sort=asc';
+        } else if (selectedValue === 'available') {
+            const availableProducts = prods.filter(prod => prod.stock > 0);
+            console.log('Productos disponibles:', availableProducts);
+        }
+    });
+
+    </script>
 </body>
 </html>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/index.js"></script>
+

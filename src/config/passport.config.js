@@ -1,7 +1,7 @@
 import passport from "passport";
 import jwt from "passport-jwt";
 import dotenv from "dotenv";
-import userModel from "../models/user.model.js";
+import userModel from "../dao/models/user.model.js";
 import GitHubStrategy from "passport-github2"
 
 dotenv.config();

@@ -1,13 +1,104 @@
-<h2>Iniciar Sesión</h2>
-<form action="/api/sessions/login" method="POST">
-    <label for="email">Email:</label>
-    <input type="email" name="email" required>
-    <label for="password">Contraseña:</label>
-    <input type="password" name="password" required>
-    <button type="submit">Ingresar</button>
-</form>
-<div>
-    <a href="/api/sessions/github"> <button>Ingresar con Github</button></a>
-</div>
-<a href="/register">Registrarse</a>
-<a href="/reset-password">Cambiar Contraseña</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333; /* Gris oscuro */
+            padding: 10px;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .navbar button {
+            background-color: #fff; /* Botones del navbar en blanco */
+            color: black;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .navbar button:hover {
+            background-color: #eaeaea;
+        }
+        h2 {
+            color: #333;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 300px;
+            margin: 20px 0;
+        }
+        label, input {
+            width: 100%;
+        }
+        button {
+            background-color: #333; /* Gris oscuro para botones fuera del navbar */
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        a {
+            text-decoration: none;
+            margin: 10px 0;
+            color: #007BFF;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .auth-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <button onclick="location.href='/register'">Registrarse</button>
+        <button onclick="location.href='/'">Ver Productos</button>
+        <button onclick="location.href='/reset-password'">Cambiar Contraseña</button>
+    </div>
+
+    <h2>Iniciar Sesión</h2>
+    
+    <form action="/api/sessions/login" method="POST">
+        <label for="email">Email:</label>
+        <input type="email" name="email" required>
+        <label for="password">Contraseña:</label>
+        <input type="password" name="password" required>
+        <button type="submit">Ingresar</button>
+    </form>
+
+    <div class="auth-options">
+        <a href="/api/sessions/github"><button>Ingresar con Github</button></a>
+        <a href="/register">Registrarse</a>
+        <a href="/reset-password">Cambiar Contraseña</a>
+        <a href="/">Volver a ver Productos</a>
+    </div>
+    
+</body>
+</html>
