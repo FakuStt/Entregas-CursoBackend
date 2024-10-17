@@ -4,9 +4,12 @@ import { isAdmin, isNotAdmin } from '../middleware/adm.js';
 import { getAllProducts, getAllProductsAndCarts } from '../controllers/view.controller.js';
 import { transport } from '../utils.js';
 import twilio from 'twilio'
+import dotenv from "dotenv"
+
+dotenv.config()
 
 
-const client = twilio(TWILIO_ACOUNT_SID, TWILIO_AUTH_TOKEN)
+const client = twilio(process.env.TWILIO_ACOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
 
 const router = Router();
 
@@ -39,7 +42,7 @@ router.get('/reset-password', (req,res) => {
 router.get('/sms', async(req,res) => {
     let result = await client.messages.create({
         body:"SMS de prueba",
-        from: TWILIO_SMS_NUMBER,
+        from: process.env.TWILIO_SMS_NUMBER,
         to: "NUMERO DE TELEFONO DE USER"
     })
     res.send({status:"success", result: "mensaje enviado"})
