@@ -5,9 +5,6 @@ import { getAllProducts, getAllProductsAndCarts } from '../controllers/view.cont
 import { transport } from '../utils.js';
 import twilio from 'twilio'
 
-const TWILIO_ACOUNT_SID = "AC1a331d30574e49f0e3cab67f78e7310f"
-const TWILIO_AUTH_TOKEN="37fb479da8891504b9e7fa6d58b256f8"
-const TWILIO_SMS_NUMBER="+13053063234"
 
 const client = twilio(TWILIO_ACOUNT_SID, TWILIO_AUTH_TOKEN)
 
