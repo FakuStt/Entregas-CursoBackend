@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle del Carrito</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/index.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            padding: 10px;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .navbar img {
+            height: 50px;
+            margin-right: 20px;
+            filter: brightness(0.9);
+            cursor: pointer;
+        }
+        .navbar select, .navbar input, .navbar button {
+            margin: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        .navbar button {
+            background-color: white;
+            color: black;
+            cursor: pointer;
+        }
+        .navbar button:hover {
+            background-color: #ddd;
+        }
+        .cart-detail {
+            width: 80%;
+            max-width: 800px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .cart-header {
+            margin-bottom: 20px;
+        }
+        .cart-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .cart-item p {
+            margin: 0;
+        }
+        .cart-item .item-id {
+            flex: 1;
+            text-align: left;
+        }
+        .cart-item .item-quantity {
+            flex: 1;
+            text-align: center;
+        }
+        .cart-item .item-actions {
+            flex: 1;
+            text-align: right;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="logo.png" alt="Logo" onclick="location.href='/'">
+        <select id="filterSelect">
+            <option value="">Filtrar por:</option>
+            <option value="asc">Menor precio</option>
+            <option value="desc">Mayor precio</option>
+            <option value="available">Disponible</option>
+        </select>
+        <input type="text" placeholder="Buscar productos...">
+        <button onclick="location.href='/profile'">Visitar Perfil</button>
+    </div>
+
+    <div class="cart-detail">
+        <h1>Carrito ID: {{cart._id}}</h1>
+        <h2>Productos agregados:</h2>
+        {{#if cart.products.length}}
+            <div class="cart-items">
+                {{#each cart.products}}
+                    <div class="cart-item">
+                        <p class="item-id">Producto ID: {{this.product._id}}</p>
+                        <p class="item-quantity">Cantidad: {{this.quantity}}</p>
+                        <div class="item-actions">
+                            <button onclick="modifyProductQuantity('{{cart._id}}', '{{this.product._id}}')">Modificar Cantidad</button>
+                            <button onclick="deleteProductCart('{{cart._id}}', '{{this.product._id}}')">Eliminar</button>
+                            <button onclick="location.href='/api/products/{{this.product._id}}'">Ver Detalles</button>
+                        </div>
+                    </div>
+                {{/each}}
+                <button onclick="deleteCart('{{cart._id}}')">Eliminar Carrito</button>
+                <button onclick="emptyCart('{{cart._id}}')">Vaciar Carrito</button>
+                <button onclick="location.href='/api/carts/{{cart._id}}/purchase'">Finalizar compra</button>
+            </div>
+        {{else}}
+            <p>No hay productos en este carrito.</p>
+        {{/if}}
+    </div>
+    <script>
+        document.getElementById('filterSelect').addEventListener('change', function() {
+            const selectedValue = this.value;
+
+            if (selectedValue === 'desc') {
+                location.href = '/?sort=desc';
+            } else if (selectedValue === 'asc') {
+                location.href = '/?sort=asc';
+            } else if (selectedValue === 'available') {
+                const availableProducts = prods.filter(prod => prod.stock > 0);
+                console.log('Productos disponibles:', availableProducts);
+            }
+        });
+    </script>
+
+</body>
+</html>

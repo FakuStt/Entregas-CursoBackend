@@ -76,16 +76,10 @@
 </head>
 <body>
 
-    <!-- Navbar -->
-    <div class="navbar">
-        <button onclick="location.href='/login'">Iniciar sesión</button>
-        <button onclick="location.href='/'">Ver Productos</button>
-        <button onclick="location.href='/reset-password'">Restablecer contraseña</button>
-    </div>
-
+    <h1>BIENVENID@ A NUESTRA TIENDA</h1>
     <h2>Registro</h2>
     
-    <form action="/api/sessions/register" method="POST">
+    <form action="/profile" method="POST">
         <label for="first_name">Nombre:</label>
         <input type="text" name="first_name" required>
         <label for="last_name">Apellido:</label>
@@ -103,7 +97,6 @@
 
     <div class="auth-options">
         <a href="/login">Iniciar sesión</a>
-        <a href="/reset-password">Restablecer contraseña</a>
     </div>
     
 </body>

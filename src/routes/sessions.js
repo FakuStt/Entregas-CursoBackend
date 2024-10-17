@@ -1,6 +1,7 @@
 import express from "express"
 import passport from "passport";
 import { registerUser, loginUser, resetPasswordUser, profileUser } from "../controllers/session.controller.js";
+import { transport } from "../utils.js";
 
 const router = express.Router()
 

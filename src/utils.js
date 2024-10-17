@@ -1,11 +1,12 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import productModel from './dao/models/products.model.js';
-import cartModel from './dao/models/cart.model.js';
+import CartModel from './dao/models/cart.model.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
 import dotenv from 'dotenv'
+import nodemailer from 'nodemailer'
 
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
@@ -134,5 +135,44 @@ export const authorization = (role) => {
         next()
     }
 }
+
+export const transport = nodemailer.createTransport({
+    service: "gmail",
+    port: process.env.PORT,
+    auth:{
+        user:"facundo.stazione@gmail.com",
+        pass:"wcas rfhs okua jgfh"
+    }
+})
+
+export async function addProductToCart(cartId, productId, quantity = 1) {
+    try {
+        // Encuentra el carrito por ID
+        const cart = await CartModel.findById(cartId);
+        
+        // Verifica si el carrito existe
+        if (!cart) {
+            throw new Error("Carrito no encontrado");
+        }
+
+        // Busca el producto en el carrito
+        const existingProductIndex = cart.products.findIndex(product => product.productId.toString() === productId);
+
+        if (existingProductIndex !== -1) {
+            // Si el producto ya existe, aumenta la cantidad
+            cart.products[existingProductIndex].quantity += quantity;
+        } else {
+            // Si el producto no existe, lo agrega al carrito
+            cart.products.push({ productId, quantity });
+        }
+
+        // Guarda los cambios en el carrito
+        await cart.save();
+        console.log("Producto agregado/modificado correctamente");
+    } catch (error) {
+        console.error("Error agregando producto al carrito:", error);
+    }
+}
+
 
 export default { getProducts,agregarCarrito, __dirname, authToken };

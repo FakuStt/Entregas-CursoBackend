@@ -190,7 +190,7 @@ function deleteProduct(productID) {
 function modifyProductQuantity(cartID, productID) {
     Swal.fire({
         title: 'Modificar cantidad del producto en el carrito',
-        html: '<input id="quantity" class="swal2-input" type="number" placeholder="Cantidad">',
+        html: '<input id="quantity" class="swal2-input" type="number" placeholder="Cantidad" min="1">',
         focusConfirm: false,
         preConfirm: () => {
             const quantity = parseInt(document.getElementById('quantity').value, 10);
@@ -207,6 +207,19 @@ function modifyProductQuantity(cartID, productID) {
         }
     });
 }
+
+function deleteProductCart(cartID, productID) {
+    confirmAction(
+        '¿Estás seguro de que deseas eliminar este producto del carrito?',
+        'Esta acción eliminará el producto del carrito.',
+        'Sí, eliminar',
+        () => {
+            socket.emit('deleteProductCart', cartID, productID);
+            Swal.fire('Producto eliminado', 'El producto ha sido eliminado del carrito', 'success');
+        }
+    );
+}
+
 
 // Configurar botón para agregar producto
 function setupAddProductButton() {

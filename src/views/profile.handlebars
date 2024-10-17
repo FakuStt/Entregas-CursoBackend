@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil de Usuario</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/index.js"></script>
     <style>
         body {
             background-color: white;
@@ -71,19 +74,21 @@
             max-width: 600px;
             text-align: center;
         }
+        
     </style>
 </head>
 <body>
     <div class="navbar">
         <img src="logo.png" alt="Logo" onclick="location.href='/'">
-        <select>
-            <option>Filtrar por:</option>
-            <option onclick="location.href='/?sort=desc'">Menor precio</option>
-            <option onclick="location.href='/?sort=asc'">Mayor precio</option>
+        <select id="filterSelect">
+            <option value="">Filtrar por:</option>
+            <option value="asc">Menor precio</option>
+            <option value="desc">Mayor precio</option>
+            <option value="available">Disponible</option>
         </select>
         <input type="text" placeholder="Buscar productos...">
-        <button onclick="location.href='/carritos'">Ver Carritos</button>
-        <button onclick="location.href='/perfil'">Visitar Perfil</button>
+        <button onclick="location.href='/api/carts'">Visitar Carritos</button>
+        <button onclick="location.href='/'">Visitar Productos</button>
     </div>
 
     <div class="content">
@@ -103,5 +108,21 @@
         </form>
         {{/if}}
     </div>
+    <script>
+        
+        document.getElementById('filterSelect').addEventListener('change', function() {
+        const selectedValue = this.value;
+
+        if (selectedValue === 'desc') {
+            location.href = '/?sort=desc';
+        } else if (selectedValue === 'asc') {
+            location.href = '/?sort=asc';
+        } else if (selectedValue === 'available') {
+            const availableProducts = prods.filter(prod => prod.stock > 0);
+            console.log('Productos disponibles:', availableProducts);
+        }
+        });
+
+    </script>
 </body>
 </html>

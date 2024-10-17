@@ -72,17 +72,22 @@
             align-items: center;
             gap: 10px;
         }
+        /* Estilo para que los enlaces parezcan botones */
+        .auth-options a.btn-link {
+            display: inline-block;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .auth-options a.btn-link:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
-
-    <!-- Navbar -->
-    <div class="navbar">
-        <button onclick="location.href='/register'">Registrarse</button>
-        <button onclick="location.href='/'">Ver Productos</button>
-        <button onclick="location.href='/reset-password'">Cambiar Contraseña</button>
-    </div>
-
+    <h1>BIENVENID@ A NUESTRA TIENDA</h1>
     <h2>Iniciar Sesión</h2>
     
     <form action="/api/sessions/login" method="POST">
@@ -94,11 +99,12 @@
     </form>
 
     <div class="auth-options">
-        <a href="/api/sessions/github"><button>Ingresar con Github</button></a>
+        <!-- Enlace para GitHub sin botón anidado -->
+        <a href="/api/sessions/github" class="btn-link">Ingresar con Github</a>
         <a href="/register">Registrarse</a>
         <a href="/reset-password">Cambiar Contraseña</a>
-        <a href="/">Volver a ver Productos</a>
     </div>
     
 </body>
 </html>
+

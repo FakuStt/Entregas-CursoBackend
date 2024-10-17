@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - User</title>
+    <title>Product Details</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/js/index.js"></script>
@@ -17,7 +17,7 @@
             flex-direction: column;
             align-items: center;
         }
-        h1, h2 {
+        h1 {
             text-align: center;
             color: #333;
         }
@@ -31,9 +31,9 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
         .navbar img {
-            height: 50px; /* Ajusta el tamaño del logo */
+            height: 50px;
             margin-right: 20px;
-            filter: brightness(0.9); /* Logo gris claro */
+            filter: brightness(0.9);
             cursor: pointer;
         }
         .navbar select, .navbar input, .navbar button {
@@ -41,34 +41,87 @@
             border: 1px solid #ccc;
             border-radius: 5px;
             padding: 5px;
-        }
-        .navbar button {
-            background-color: white; /* Fondo blanco para botones del navbar */
+            background-color: white; /* Fondo blanco */
             color: black; /* Letras negras */
-            cursor: pointer;
         }
         .navbar button:hover {
-            background-color: #ddd; /* Color al pasar el ratón */
+            background-color: #eaeaea;
         }
-        #product-list {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            padding: 20px;
-            width: 100%; /* Full width for products */
+        a {
+            color: #00f;
+            text-decoration: none;
         }
-        #product-list li {
-            list-style-type: none;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+        a:hover {
+            text-decoration: underline;
+        }
+        button {
+            background-color: #333; /* Fondo gris oscuro */
+            color: white; /* Letras blancas */
             padding: 10px;
-            text-align: center;
-            background-color: #f9f9f9; /* Fondo de productos */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
-        #product-list img {
-            max-width: 100%;
-            height: 150px; /* Tamaño fijo para las imágenes */
-            border-radius: 8px;
+        button:hover {
+            background-color: #555; /* Un poco más claro al pasar */
+        }
+        .container {
+            margin-top: 50px;
+            width: 80%;
+            max-width: 900px;
+        }
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+        .card-body {
+            text-align: left;
+        }
+        .card-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .card-text {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+        .btn {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background-color: #555;
+        }
+        .btn:hover {
+            background-color: #444;
+        }
+        .hidden {
+            display: none;
+        }
+        #cart-toggle {
+            background-color: white; /* Fondo blanco para el botón de ver carritos */
+            color: black; /* Letras negras */
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #cart-container h3 {
+            text-align: center; /* Centra el encabezado de Carritos */
+            margin: 0; /* Elimina el margen */
+            padding: 10px 0; /* Añade espacio alrededor del texto */
         }
         #cart-container {
             position: fixed;
@@ -100,36 +153,12 @@
             display: flex;
             justify-content: space-between; /* Distribuye los botones */
         }
-        button {
-            background-color: #333; /* Fondo gris oscuro para otros botones */
-            color: white; /* Letras blancas */
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-            border: none; /* Elimina el borde por defecto */
-        }
-        button:hover {
-            background-color: #444; /* Color al pasar el ratón */
-        }
-        .hidden {
-            display: none;
-        }
-        #cart-toggle {
-            background-color: white; /* Fondo blanco para el botón de ver carritos */
-            color: black; /* Letras negras */
-            cursor: pointer;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #cart-container h3 {
-            text-align: center; /* Centra el encabezado de Carritos */
-            margin: 0; /* Elimina el margen */
-            padding: 10px 0; /* Añade espacio alrededor del texto */
-        }
     </style>
 </head>
 <body>
-    <div class="navbar">
+
+    <!-- Navbar -->
+     <div class="navbar">
         <img src="logo.png" alt="Logo" onclick="location.href='/'">
         <select id="filterSelect">
             <option value="">Filtrar por:</option>
@@ -142,29 +171,27 @@
         <button onclick="location.href='/profile'">Visitar Perfil</button>
     </div>
 
-    <h1>Lista de Productos - Usuario</h1>
-    <ul id="product-list">
-        {{#if payload}}
-            {{#each payload}}
-                <li>
-                    <img src="https://via.placeholder.com/150" alt="Producto" /> <!-- Imagen predeterminada -->
-                    <p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{description}} - Disponibles: {{stock}}</p>
-                    <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
-                    <button onclick="location.href='/api/products/{{this._id}}'">Visitar Producto</button>
-                </li>
-            {{/each}}
-        {{else}}
-            <p>No hay productos disponibles.</p>
-        {{/if}}
-    </ul>
-
-    <div>
-        {{#if prevLink}}
-            <a href="{{prevLink}}">Anterior</a>
-        {{/if}}
-        {{#if nextLink}}
-            <a href="{{nextLink}}">Siguiente</a>
-        {{/if}}
+    <!-- Product Details -->
+    <div class="container mt-5">
+        <h1>Product Details</h1>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Producto: {{product.title}}</h5>
+                <p class="card-text"><strong>Description:</strong>{{product.description}}</p>
+                <p class="card-text"><strong>Code:</strong> {{product.code}}</p>
+                <p class="card-text"><strong>Price:</strong> ${{product.price}}</p>
+                <p class="card-text"><strong>Stock:</strong> {{product.stock}}</p>
+                <p class="card-text"><strong>Category:</strong> {{product.category}}</p>
+                <p class="card-text"><strong>Thumbnails:</strong></p>
+                <ul>
+                    {{#each product.thumbnails}}
+                        <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+                <button class="btn" onclick="addProductToCart('{{product._id}}')">Add to Cart</button>
+                <a href="/realtimeproducts" class="btn btn-secondary">Back to Products</a>
+            </div>
+        </div>
     </div>
 
     <div id="cart-container">
@@ -212,8 +239,6 @@
     });
 
     </script>
+
 </body>
 </html>
-
-
-

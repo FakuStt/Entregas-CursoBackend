@@ -1,6 +1,7 @@
 import userModel from "../models/user.model.js";
 import { createHash } from "../../utils.js";
 import { isValidPassword } from "../../utils.js";
+import bcrypt from "bcryptjs/dist/bcrypt.js";
 
 class UserService {
     async getUsers(){

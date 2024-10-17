@@ -12,6 +12,8 @@ import passport from "passport";
 import initializePassport from "./config/passport.config.js";
 import db from "./config/database.js";
 import dotenv from "dotenv"
+import cors from "cors"
+import { addProductToCart } from "./utils.js";
 
 // Importar rutas y modelos
 import cartRoute from "./routes/cart.router.js";
@@ -45,6 +47,7 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize())
 app.use(passport.session())
+// app.use(cors())
 initializePassport()
 
 app.engine('handlebars', handlebars.engine({
@@ -65,6 +68,8 @@ app.use("/api/carts", cartRoute);
 app.use("/api/products", productsRoute);
 app.use("/", viewsRoute);
 app.use("/api/sessions", sessionsRoute);
+
+
 
 // Configuración de servidor HTTP y Socket.io
 const httpServer = http.createServer(app);
@@ -110,6 +115,21 @@ socketServer.on('connection', socket => {
         }
     });
 
+    socket.on('deleteProductCart', async (productId) => {
+        if (!productId || productId.trim() === '') {
+            console.error('ID de producto no válido:', productId);
+            return;
+        }
+    
+        try {
+            await cartModel.findByIdAndDelete(productId);
+            console.log('Producto eliminado con ID:', productId);
+        } catch (error) {
+            console.error('Error eliminando producto:', error);
+        }
+    });
+    
+
     socket.on('createCart', async () => {
         try {
             const newCart = new cartModel({ products: [] });
@@ -147,20 +167,21 @@ socketServer.on('connection', socket => {
         }
     });
 
-    // Manejar la adición de productos a carritos
-    socket.on('addProductToCart', async ({ cartId, productId }) => {
+    socket.on('modifyProductQuantity', async ({ cartId, productId, quantity }) => {
         try {
             const cart = await cartModel.findById(cartId);
-            if (cart) {
-                // Asumiendo que tienes una función para agregar el producto al carrito
-                cart.products.push({ product: productId, quantity: 1 });
-                await cart.save();
-                socketServer.emit('cartListUpdated', await cartModel.find());
-            }
+            await cart.products.findByIdAndUpdate(productId, quantity)
         } catch (error) {
-            console.error('Error agregando producto al carrito:', error);
+            console.error('Error actualizando la cantidad del producto en el carrito:', error);
             socket.emit('errorMessage', 'Error al agregar producto al carrito');
         }
+    });
+
+    // Manejar la adición de productos a carritos
+    socket.on('addProductToCart', (data) => {
+        const { cartId, productId, quantity } = data; // Asegúrate de que quantity esté en el objeto data
+        addProductToCart(cartId, productId, quantity);
+        socket.emit('')
     });
 
     socket.on('disconnect', () => {

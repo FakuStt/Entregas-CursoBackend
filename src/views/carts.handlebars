@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carritos</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/index.js"></script>
+    <style>
+        body {
+            background-color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: black;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            padding: 10px;
+            width: 100%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .navbar img {
+            height: 50px;
+            margin-right: 20px;
+            filter: brightness(0.9);
+            cursor: pointer;
+        }
+        .navbar select, .navbar input, .navbar button {
+            margin: 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px;
+        }
+        .navbar button {
+            background-color: white;
+            color: black;
+            cursor: pointer;
+        }
+        .navbar button:hover {
+            background-color: #ddd;
+        }
+        #cart-container {
+            width: 80%;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        #cart-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            list-style-type: none;
+            padding: 0;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .cart-item p {
+            margin: 0;
+            color: black; /* Letra negra para evitar problemas de visibilidad */
+        }
+        .cart-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+        }
+        button:hover {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="logo.png" alt="Logo" onclick="location.href='/'">
+        <select id="filterSelect">
+            <option value="">Filtrar por:</option>
+            <option value="asc">Menor precio</option>
+            <option value="desc">Mayor precio</option>
+            <option value="available">Disponible</option>
+        </select>
+        <input type="text" placeholder="Buscar productos...">
+        <button onclick="location.href='/profile'">Visitar Perfil</button>
+    </div>
+    
+    <div id="cart-container">
+        <h3>Carritos</h3>
+        <ul id="cart-list">
+            {{#if carts}}
+                {{#each carts}}
+                    <li class="cart-item">
+                        <p>ID: {{this._id}}</p>
+                        <p>Productos: {{this.products.length}}</p>
+                        <button onclick="deleteCart('{{this._id}}')">Eliminar Carrito</button>
+                        <button onclick="location.href='/api/carts/{{this._id}}'">Ver Detalles</button>
+                    </li>
+                {{/each}}
+            {{else}}
+                <p>No hay carritos disponibles.</p>
+            {{/if}}
+        </ul>
+    </div>
+    
+    <script>
+        document.getElementById('filterSelect').addEventListener('change', function() {
+            const selectedValue = this.value;
+
+            if (selectedValue === 'desc') {
+                location.href = '/?sort=desc';
+            } else if (selectedValue === 'asc') {
+                location.href = '/?sort=asc';
+            } else if (selectedValue === 'available') {
+                const availableProducts = prods.filter(prod => prod.stock > 0);
+                console.log('Productos disponibles:', availableProducts);
+            }
+        });
+    </script>
+</body>
+</html>

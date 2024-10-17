@@ -1,3 +1,4 @@
+import cartModel from "../dao/models/cart.model.js";
 import ProductService from "../dao/classes/product.dao.js";
 
 const productService = new ProductService;
@@ -25,9 +26,11 @@ export const getPaginateProducts = async (req, res) => {
 
 export const getProductById = async (req,res) => {
     try {
-        const pid = parseInt(req.params.pid);
-        let productId = await productService.getProductById(pid);
-        res.status(200).json(productId);
+        let productId = await productService.getProductById(req.params.pid);
+        let carts = await cartModel.find()
+
+        console.log('Rendering view for product:', productId); // Debugging log
+        res.render('productDetail', { product: productId, cart: carts});
     } catch (error) {
         console.log(error);
         res.status(500).json({ status: "error", message: error.message });

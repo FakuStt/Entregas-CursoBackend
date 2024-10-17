@@ -2,6 +2,14 @@ import { Router } from 'express';
 import { isAuthenticated, isNotAuthenticated } from '../middleware/auth.js';
 import { isAdmin, isNotAdmin } from '../middleware/adm.js';
 import { getAllProducts, getAllProductsAndCarts } from '../controllers/view.controller.js';
+import { transport } from '../utils.js';
+import twilio from 'twilio'
+
+const TWILIO_ACOUNT_SID = "AC1a331d30574e49f0e3cab67f78e7310f"
+const TWILIO_AUTH_TOKEN="37fb479da8891504b9e7fa6d58b256f8"
+const TWILIO_SMS_NUMBER="+13053063234"
+
+const client = twilio(TWILIO_ACOUNT_SID, TWILIO_AUTH_TOKEN)
 
 const router = Router();
 
@@ -24,9 +32,20 @@ router.get('/profile', isAuthenticated, (req, res) => {
     res.render('profile', {user});
 });
 
-router.get('/reset-password', isAuthenticated, (req,res) => {
+
+router.get('/reset-password', (req,res) => {
     const user = req.user
-    res.render('reset-password', {user});
+    res.render('resetPassword', {user});
+})
+
+
+router.get('/sms', async(req,res) => {
+    let result = await client.messages.create({
+        body:"SMS de prueba",
+        from: TWILIO_SMS_NUMBER,
+        to: "NUMERO DE TELEFONO DE USER"
+    })
+    res.send({status:"success", result: "mensaje enviado"})
 })
 
 

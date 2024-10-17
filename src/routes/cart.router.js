@@ -1,9 +1,12 @@
 import { Router } from "express";
-import { createCart, getCartById, saveProductIdInCartId, deleteProductInCart, updateCart, updateProductInCart, deleteCart, purchaseCart } from "../controllers/cart.controller.js";
+import { createCart, getCartById, saveProductIdInCartId, deleteProductInCart, updateCart, updateProductInCart, deleteCart, purchaseCart, getAllCarts } from "../controllers/cart.controller.js";
 
 const router = Router();
 //Agregar un carrito nuevo
 router.post('/', createCart)
+
+//Mostrar todos los carritos
+router.get('/', getAllCarts)
 
 //Mostrar un carrito por ID
 router.get('/:cid', getCartById)
