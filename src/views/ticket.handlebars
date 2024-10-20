@@ -43,22 +43,20 @@
 <body>
 
     <div class="ticket">
-        <h2>Ticket Code: {{code}}</h2>
-        <p><strong>Date of Purchase:</strong> {{purchase_datetime}}</p>
-        <p><strong>Amount:</strong> ${{amount}}</p>
-        <p><strong>Purchaser:</strong> {{purchaser}}</p>
+        <h2>Ticket Code: {{ticketCart.code}}</h2>
+        <p><strong>Date of Purchase:</strong> {{ticketCart.purchase_datetime}}</p>
+        <p><strong>Amount:</strong> ${{ticketCart.amount}}</p>
+        <p><strong>Purchaser:</strong> {{ticketCart.purchaser}}</p>
 
         <div class="ticket-buttons">
             <!-- Botón para confirmar la compra -->
             <button id="confirm-purchase">Finalizar Compra</button>
             
-            <!-- Botón para cancelar la compra -->
             <button id="cancel-purchase">Ir a carritos</button>
         </div>
     </div>
 
     <script>
-        // Manejo del botón de finalizar compra
         document.getElementById('confirm-purchase').addEventListener('click', function() {
             Swal.fire({
                 title: '¿Estás seguro de finalizar la compra?',
@@ -75,19 +73,18 @@
                         'Compra finalizada',
                         'Tu compra ha sido realizada con éxito.',
                         'success'
-                    );
-                    // Aquí puedes agregar la lógica para completar la compra
-                    // por ejemplo, hacer una petición al servidor para completar la transacción
+                    ).then(() => {
+                        window.location.href = '/api/carts';
+                    });
                 }
             });
         });
 
-        // Manejo del botón de cancelar
         document.getElementById('cancel-purchase').addEventListener('click', function() {
-            // Redirige al carrito personal (ajusta la ruta más tarde)
             window.location.href = '/api/carts';
         });
     </script>
 
 </body>
 </html>
+

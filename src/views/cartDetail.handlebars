@@ -114,32 +114,36 @@
             <option value="available">Disponible</option>
         </select>
         <input type="text" placeholder="Buscar productos...">
+        <button onclick="location.href='/api/carts'">Visitar Carritos</button>
         <button onclick="location.href='/profile'">Visitar Perfil</button>
     </div>
 
     <div class="cart-detail">
-        <h1>Carrito ID: {{cart._id}}</h1>
-        <h2>Productos agregados:</h2>
-        {{#if cart.products.length}}
-            <div class="cart-items">
-                {{#each cart.products}}
-                    <div class="cart-item">
-                        <p class="item-id">Producto ID: {{this.product._id}}</p>
-                        <p class="item-quantity">Cantidad: {{this.quantity}}</p>
-                        <div class="item-actions">
-                            <button onclick="modifyProductQuantity('{{cart._id}}', '{{this.product._id}}')">Modificar Cantidad</button>
-                            <button onclick="deleteProductCart('{{cart._id}}', '{{this.product._id}}')">Eliminar</button>
-                            <button onclick="location.href='/api/products/{{this.product._id}}'">Ver Detalles</button>
+        {{#with cart}}
+            <h1>Carrito ID: {{_id}}</h1>
+            <h2>Productos agregados:</h2>
+            {{#if products.length}}
+                <div class="cart-items">
+                    {{#each products}}
+                        <div class="cart-item">
+                            <p class="item-id">Producto ID: {{this.product._id}}</p>
+                            <p class="item-quantity">Cantidad: {{this.quantity}}</p>
+                            <div class="item-actions">
+                                <button onclick="modifyProductQuantity('{{../_id}}', '{{this.product._id}}')">Modificar Cantidad</button>
+                                <button onclick="deleteProductCart('{{../_id}}', '{{this.product._id}}')">Eliminar</button>
+                                <button onclick="location.href='/api/products/{{this.product._id}}'">Ver Detalles</button>
+                            </div>
                         </div>
-                    </div>
-                {{/each}}
-                <button onclick="deleteCart('{{cart._id}}')">Eliminar Carrito</button>
-                <button onclick="emptyCart('{{cart._id}}')">Vaciar Carrito</button>
-                <button onclick="location.href='/api/carts/{{cart._id}}/purchase'">Finalizar compra</button>
-            </div>
-        {{else}}
-            <p>No hay productos en este carrito.</p>
-        {{/if}}
+                    {{/each}}
+                    <button onclick="deleteCart('{{_id}}')">Eliminar Carrito</button>
+                    <button onclick="emptyCart('{{_id}}')">Vaciar Carrito</button>
+                    <button onclick="location.href='/api/carts/{{_id}}/purchase'">Finalizar compra</button>
+                </div>
+            {{else}}
+                <p>No hay productos en este carrito.</p>
+            {{/if}}
+        {{/with}}
+
     </div>
     <script>
         document.getElementById('filterSelect').addEventListener('change', function() {

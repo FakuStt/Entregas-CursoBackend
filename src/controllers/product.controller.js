@@ -1,8 +1,10 @@
+//CONTROLADOR DE PRODUCTOS - NO TRABAJA CON LA BASE DE DATOS
 import cartModel from "../dao/models/cart.model.js";
 import ProductService from "../dao/classes/product.dao.js";
 
 const productService = new ProductService;
 
+//obtener todos los productos paginados
 export const getPaginateProducts = async (req, res) => {
     try {
         const result = await productService.getPaginateProducts(req.query);
@@ -24,12 +26,11 @@ export const getPaginateProducts = async (req, res) => {
     }
 }
 
+//obtener producto por id
 export const getProductById = async (req,res) => {
     try {
         let productId = await productService.getProductById(req.params.pid);
         let carts = await cartModel.find()
-
-        console.log('Rendering view for product:', productId); // Debugging log
         res.render('productDetail', { product: productId, cart: carts});
     } catch (error) {
         console.log(error);
@@ -37,6 +38,7 @@ export const getProductById = async (req,res) => {
     }
 }
 
+//crear producto
 export const createProduct = async (req,res) => {
     try {
         const { title, description, code, price, status, stock, category, thumbnails } = req.body;
@@ -48,6 +50,7 @@ export const createProduct = async (req,res) => {
     }
 }
 
+//actulizar producto
 export const updatedProduct = async (req,res) => {
     try {
         const uId = parseInt(req.params.pid);
@@ -60,6 +63,7 @@ export const updatedProduct = async (req,res) => {
     }
 }
 
+//eliminar producto
 export const deleteProduct = async (req,res) => {
     try {
         const pId = parseInt(req.params.pid);

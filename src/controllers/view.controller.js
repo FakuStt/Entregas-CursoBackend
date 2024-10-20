@@ -1,13 +1,15 @@
+//CONTROLADOR DE VISTAS - NO TRABAJA CON LA BASE DE DATOS
 import ProductService from "../dao/classes/product.dao.js";
 import CartService from "../dao/classes/cart.dao.js";
 
 const productService = new ProductService;
 const cartService = new CartService;
 
+//obtener todos los productos
 export const getAllProducts = async (req, res) => {
     try {
         const result = await productService.getPaginateProducts(req.query);
-        const carts = await cartService.getAllCarts()//Probar con .lean()
+        const carts = await cartService.getAllCarts()
         res.render('home', { 
             cart: carts,
             payload: result.docs,
@@ -25,10 +27,11 @@ export const getAllProducts = async (req, res) => {
     }
 }
 
+//obtener todos los productos y carritos
 export const getAllProductsAndCarts = async (req, res) => {
     try {
         const result = await productService.getPaginateProducts(req.query);
-        const carts = await cartService.getAllCarts() //PROBAR CON .lean()
+        const carts = await cartService.getAllCarts()
         res.render('realTimeProducts', { 
             cart: carts,
             payload: result.docs,

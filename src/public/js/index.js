@@ -98,27 +98,53 @@ function deleteCart(cartID) {
 
 // Agregar producto a carrito
 function addProductToCart(productID) {
-    Swal.fire({
-        title: 'Ingresa el ID del carrito para agregar el producto:',
-        input: 'text',
-        inputPlaceholder: 'ID del carrito',
-        showCancelButton: true,
-        confirmButtonText: 'Agregar',
-        cancelButtonText: 'Cancelar'
-    }).then(result => {
-        if (result.isConfirmed) {
-            const enteredCartID = result.value;
-            if (enteredCartID) {
-                socket.emit('addProductToCart', { cartId: enteredCartID, productId: productID });
-            } else {
-                Swal.fire('Error', 'El ID del carrito no puede estar vacío', 'error');
-            }
-        }
-    }).catch(error => {
-        Swal.fire('Error', 'Hubo un problema al procesar tu solicitud', 'error');
-        console.error('Error al procesar la solicitud:', error);
-    });
+    console.log("Función 'addProductToCart' invocada para el producto:", productID);
+
+    const addProductToCartButton = document.getElementById(`addProductToCartButton-${productID}`);
+    console.log("Buscando botón con ID:", `addProductToCartButton-${productID}`);
+    
+    if(addProductToCartButton) {
+        console.log("Botón encontrado, registrando evento 'click'.");
+        addProductToCartButton.addEventListener('click', () => {
+            console.log("Botón clicado, mostrando SweetAlert.");
+
+            Swal.fire({
+                title: 'Agregar al carrito',
+                html: `
+                    <input id="cartId" class="swal2-input" type="text" placeholder="Id del Carrito">
+                    <input id="quantity" class="swal2-input" type="number" placeholder="Cantidad a agregar">
+                `,
+                focusConfirm: false,
+                preConfirm: () => {
+                    const cartId = document.getElementById('cartId').value;
+                    const quantity = document.getElementById('quantity').value;
+
+                    if (!cartId || !quantity) {
+                        Swal.showValidationMessage('Todos los campos son obligatorios.');
+                        return false;
+                    }
+
+                    return {
+                        productId: productID,
+                        cartId: cartId,
+                        quantity: quantity
+                    };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const data = result.value;
+                    console.log("Datos enviados a través del socket:", data);
+                    socket.emit('addProductToCart', data);
+                    Swal.fire('Producto agregado al carrito', 'El producto se ha agregado al carrito correctamente', 'success');
+                }
+            });
+        });
+    } else {
+        console.log("Botón no encontrado para el producto:", productID);
+    }
 }
+
+
 
 // Modificar producto
 
@@ -194,32 +220,70 @@ function modifyProductQuantity(cartID, productID) {
         focusConfirm: false,
         preConfirm: () => {
             const quantity = parseInt(document.getElementById('quantity').value, 10);
-            if (quantity <= 0) {
+            if (isNaN(quantity) || quantity < 1) {
                 Swal.showValidationMessage('La cantidad debe ser mayor que 0.');
                 return false;
             }
-            return { cartId: cartID, productId: productID, quantity };
+            return { quantity };
         }
     }).then(result => {
         if (result.isConfirmed) {
-            socket.emit('updateProductQuantity', result.value);
-            Swal.fire('Cantidad actualizada', 'La cantidad del producto en el carrito ha sido actualizada', 'success');
+            // Hacer la llamada a la API para actualizar la cantidad
+            fetch(`/api/carts/${cartID}/products/${productID}`, {
+                method: 'PUT', // Cambiar a PUT según tu ruta
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ quantity: result.value.quantity })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la actualización');
+                }
+                return response.json();
+            })
+            .then(data => {
+                Swal.fire('Cantidad actualizada', 'La cantidad del producto en el carrito ha sido actualizada', 'success');
+                // Actualiza el DOM si es necesario, por ejemplo, actualizar la cantidad mostrada
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Hubo un error al actualizar la cantidad', 'error');
+            });
         }
     });
 }
+
+
 
 function deleteProductCart(cartID, productID) {
     confirmAction(
         '¿Estás seguro de que deseas eliminar este producto del carrito?',
         'Esta acción eliminará el producto del carrito.',
         'Sí, eliminar',
-        () => {
-            socket.emit('deleteProductCart', cartID, productID);
-            Swal.fire('Producto eliminado', 'El producto ha sido eliminado del carrito', 'success');
+        async () => {
+            try {
+                const response = await fetch(`/api/carts/${cartID}/products/${productID}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al eliminar el producto del carrito');
+                }
+
+                const result = await response.json();
+                Swal.fire('Producto eliminado', 'El producto ha sido eliminado del carrito', 'success');
+                // Aquí puedes agregar lógica para actualizar la vista si es necesario
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'No se pudo eliminar el producto', 'error');
+            }
         }
     );
 }
-
 
 // Configurar botón para agregar producto
 function setupAddProductButton() {

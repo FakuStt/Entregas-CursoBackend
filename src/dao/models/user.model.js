@@ -1,3 +1,4 @@
+//Modelo de usuarios
 import mongoose from "mongoose";
 
 const userCollection = "Users";

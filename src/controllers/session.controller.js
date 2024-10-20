@@ -1,9 +1,11 @@
+//CONTROLADOR DE SESSION - NO TRABAJA CON LA BASE DE DATOS
 import UserService from "../dao/classes/user.dao.js";
 import { generateToken } from "../utils.js";
 import { transport } from "../utils.js";
 
 const userService = new UserService;
 
+//ingresar con nuevo usuario
 export const registerUser = async (req, res) => {
     try {
         const {first_name, last_name, email, age, password, role} = req.body;
@@ -11,11 +13,12 @@ export const registerUser = async (req, res) => {
         if(!user){
             res.redirect('/failregister')
         }
-        const access_token = generateToken(user)
+        
+        const access_token = generateToken(user._id)
         res.cookie("jwt", access_token, {httpOnly: true, secure: false})
         console.log(user)
         await transport.sendMail({
-            from:"facundo.stazione@gmail.com",
+            from: process.env.EMAIL,
             to: user.email,
             subject: "Correo de bienvenida",
             html: `
@@ -100,13 +103,14 @@ export const registerUser = async (req, res) => {
             `,
             attachments:[]
         })
-        res.redirect('/profile')
+        return res.redirect('/profile')
     } catch (error) {
         console.log(error);
         res.redirect('/failregister')
     }
 }
 
+//ingresar con usuario existente
 export const loginUser = async (req, res) => {
     try {
         const {email, password} = req.body;
@@ -118,7 +122,7 @@ export const loginUser = async (req, res) => {
         res.cookie("jwt", access_token, {httpOnly: true, secure: false})
 
         await transport.sendMail({
-            from:"facundo.stazione@gmail.com",
+            from: process.env.EMAIL,
             to: user.email,
             subject: "Correo de login",
             html: `
@@ -217,6 +221,7 @@ export const loginUser = async (req, res) => {
     }
 }
 
+//reestablecer constraseña
 export const resetPasswordUser = async (req, res) => {
     try {
         const {email, password} = req.body;
@@ -231,6 +236,7 @@ export const resetPasswordUser = async (req, res) => {
     }
 }
 
+//perfil del usuario
 export const profileUser = async (req, res) => {
     try {
         let user = await userService.profileUser(req.user);

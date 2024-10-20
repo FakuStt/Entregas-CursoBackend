@@ -85,7 +85,6 @@
 </head>
 <body>
 
-    <!-- Navbar -->
     <div class="navbar">
         <img src="logo.png" alt="Logo" onclick="location.href='/'">
         <select id="filterSelect">
@@ -99,7 +98,6 @@
         <button onclick="location.href='/profile'">Visitar Perfil</button>
     </div>
 
-    <!-- Content -->
     <div class="content">
         <h1>Lista de Productos - Admin</h1>
         <ul>
@@ -108,7 +106,7 @@
                     <li><p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{this.description}} - Disponibles: {{this.stock}}</p></li>
                     <button onclick="modifyProduct('{{this._id}}')">Modificar</button>
                     <button onclick="deleteProduct('{{this._id}}')">Eliminar</button>
-                    <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
+                    <button id="addProductToCartButton" onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
                 {{/each}}
             {{else}}
                 <p>No hay productos disponibles.</p>

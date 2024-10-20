@@ -188,7 +188,7 @@
                         <li>{{this}}</li>
                     {{/each}}
                 </ul>
-                <button class="btn" onclick="addProductToCart('{{product._id}}')">Add to Cart</button>
+                <button id="addProductToCartButton-{{this._id}}" onclick="addProductToCart('{{this._id}}')">Add to Cart</button>
                 <a href="/realtimeproducts" class="btn btn-secondary">Back to Products</a>
             </div>
         </div>

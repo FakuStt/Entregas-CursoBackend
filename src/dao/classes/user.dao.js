@@ -1,35 +1,43 @@
+//UserService - Trabaja con la base de datos
 import userModel from "../models/user.model.js";
 import { createHash } from "../../utils.js";
 import { isValidPassword } from "../../utils.js";
 import bcrypt from "bcryptjs/dist/bcrypt.js";
 
 class UserService {
+
+    //obtener todos los usuarios
     async getUsers(){
         let users = await userModel.find();
         return users;
     }
 
+    //obtener usuario por id
     async getUserById(id) {
         let user = await userModel.findById(id);
         return user;
     }
 
+    //crear usuario
     async createUser(user) {
         let newUser = new userModel(user);
         let result = await newUser.save();
         return result;
     }
 
+    //actualizar usuario
     async updateUser(id, newDataUser) {
         let updateUser = await userModel.findByIdAndUpdate(id, newDataUser);
         return updateUser;
     }
 
+    //eliminar usuario
     async deleteUser(id) {
         let deletedUser = await userModel.findByIdAndDelete(id);
         return deletedUser;
     }
 
+    //ingresar con nuevo usuario
     async registerUser(first_name, last_name, email, age, password, role){
         try {
             if (!first_name || !last_name || !email || !age || !password) {
@@ -50,6 +58,7 @@ class UserService {
                 role,
                 password:  createHash(password),
             })
+            
             await newUser.save()
             return newUser;
 
@@ -59,6 +68,7 @@ class UserService {
         }
     }
 
+    //ingresar con usuario existente
     async loginUser(email, password){
         try {
             if(!email || !password) {
@@ -81,6 +91,7 @@ class UserService {
         }
     }
 
+    //reestablecer constraseña
     async resetPasswordUser(email, password){
         try {
             const user = await userModel.findOne({ email });
@@ -99,6 +110,7 @@ class UserService {
         }
     }
 
+    //perfil del usuario
     async profileUser(dataUser){
         try {
             console.log(dataUser)
@@ -114,6 +126,7 @@ class UserService {
             return null;
         }
     }
+
 }
 
 export default UserService;

@@ -1,17 +1,21 @@
+//FUNCIONES UTILES PARA USAR EN TODO EL CODIGO
+
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import productModel from './dao/models/products.model.js';
-import CartModel from './dao/models/cart.model.js';
+import cartModel from './dao/models/cart.model.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
-import dotenv from 'dotenv'
 import nodemailer from 'nodemailer'
+import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config()
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+//obtener todos los productos
 export async function getProducts(reqParams) {
         const limit = parseInt(reqParams.limit) || 10;
         const page = parseInt(reqParams.page, 10) || 1;
@@ -47,6 +51,8 @@ export async function getProducts(reqParams) {
         return null;
     }
 }
+
+//agregar un producto al carrito
 export async function agregarCarrito({ cartId, productId }, callback){
     const cart = await cartModel.findById(cartId);
             if (!cart) {
@@ -84,6 +90,7 @@ export async function agregarCarrito({ cartId, productId }, callback){
             return cart
 }
 
+//autentificacion de passport
 export const passportCall = (strategy)=>{
     return async(req,res,next)=>{
         passport.authenticate(strategy, function(err, user, info){
@@ -104,10 +111,12 @@ export const passportCall = (strategy)=>{
 //Hashear la password
 export const createHash = password => bcrypt.hashSync(password, bcrypt.genSaltSync(10))
 
+//Validar password
 export const isValidPassword = (user, password)=> bcrypt.compareSync(password, user.password)
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
+//generar token
 export const generateToken = (user) => {
     const token = jwt.sign({user}, PRIVATE_KEY, {expiresIn: "1h"})
     return token
@@ -128,6 +137,7 @@ const authToken = (req,res,next)=>{
     })
 }
 
+//autorizacion segun el rol
 export const authorization = (role) => {
     return async (req, res, next) => {
         if(!req.user) return res.status(401).send({error: "Unauthorized"})
@@ -136,37 +146,31 @@ export const authorization = (role) => {
     }
 }
 
+//para enviar emails
 export const transport = nodemailer.createTransport({
     service: "gmail",
     port: process.env.PORT,
     auth:{
-        user:"facundo.stazione@gmail.com",
-        pass:"wcas rfhs okua jgfh"
+        user:process.env.USER_EMAIL,
+        pass:process.env.USER_PASS
     }
 })
 
+//agregar producto al carrito
 export async function addProductToCart(cartId, productId, quantity = 1) {
     try {
-        // Encuentra el carrito por ID
-        const cart = await CartModel.findById(cartId);
         
-        // Verifica si el carrito existe
+        const cart = await CartModel.findById(cartId);
         if (!cart) {
             throw new Error("Carrito no encontrado");
         }
-
-        // Busca el producto en el carrito
         const existingProductIndex = cart.products.findIndex(product => product.productId.toString() === productId);
-
         if (existingProductIndex !== -1) {
-            // Si el producto ya existe, aumenta la cantidad
             cart.products[existingProductIndex].quantity += quantity;
         } else {
-            // Si el producto no existe, lo agrega al carrito
             cart.products.push({ productId, quantity });
         }
 
-        // Guarda los cambios en el carrito
         await cart.save();
         console.log("Producto agregado/modificado correctamente");
     } catch (error) {

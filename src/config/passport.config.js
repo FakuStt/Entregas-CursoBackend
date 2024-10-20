@@ -1,3 +1,4 @@
+//CONFIGURACIONES DE PASSPORT
 import passport from "passport";
 import jwt from "passport-jwt";
 import dotenv from "dotenv";
@@ -10,16 +11,17 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const JWTStrategy = jwt.Strategy;
 const ExtractJWT = jwt.ExtractJwt;
 
-
+//extraer cookies
 const cookieExtractor = (req) => {
     let token = null;
     if (req && req.cookies) {
-        token = req.cookies['jwt']; // Nombre de la cookie que contiene el token
+        token = req.cookies['jwt'];
     }
     console.log('Token extraído de la cookie:', token);
     return token;
 };
 
+//autentificar usuario
 const initializePassport=()=>{
 
     passport.use('jwt', new JWTStrategy({

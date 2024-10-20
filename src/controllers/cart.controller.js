@@ -1,23 +1,27 @@
+//CONTROLADOR PARA CARRITOS - NO TRABAJA CON LA BASE DE DATOS
 import CartService from "../dao/classes/cart.dao.js";
 import { transport } from "../utils.js";
 
 const cartService = new CartService;
 
+//crear carrito
 export const createCart = async (req,res) => {
     try {
         let newCart = await cartService.createCart();
         console.log(`Carrito con ID ${newCart._id} creado correctamente`)
-        res.send({status: "success", newCart}) //probar con payload: newCart
+        res.send({status: "success", newCart})
     } catch (error) {
         console.log(error);
         res.status(500).json({ status: "error", message: error.message });
     }
 }
 
+//obtener carrito por id
 export const getCartById = async (req,res) => {
     try {
         console.log(req.params.cid)
         let cartById = await cartService.getCartById(req.params.cid);
+        console.log(cartById)
         res.render('cartDetail', { cart: cartById })
     } catch (error) {
         console.log(error);
@@ -25,6 +29,7 @@ export const getCartById = async (req,res) => {
     }
 }
 
+//obtener todos los carritos
 export const getAllCarts = async (req,res) => {
     try {
         const carts = await cartService.getAllCarts()
@@ -36,6 +41,7 @@ export const getAllCarts = async (req,res) => {
     }
 }
 
+//guardar producto en carrito
 export const saveProductIdInCartId = async (req,res) => {
     try {
         const cartID = parseInt(req.params.cid);
@@ -48,18 +54,20 @@ export const saveProductIdInCartId = async (req,res) => {
     }
 }
 
-export const deleteProductInCart = async (req,res) => {
+//eliminar producto de carrito
+export const deleteProductInCart = async (req, res) => {
     try {
-        const cartId = parseInt(req.params.cid);
-        const productId = parseInt(req.params.pid);
+        const cartId = req.params.cid;
+        const productId = req.params.pid;
         let updateCart = await cartService.deleteProductInCart(cartId, productId);
-        res.send({status: "success", payload: updateCart})
+        res.send({ status: "success", payload: updateCart });
     } catch (error) {
         console.log(error);
         res.status(500).json({ status: "error", message: error.message });
     }
-}
+};
 
+//actualizar carrito
 export const updateCart = async (req,res) => {
     try {
         const cartId = parseInt(req.params.cid);
@@ -72,19 +80,30 @@ export const updateCart = async (req,res) => {
     }
 }
 
-export const updateProductInCart = async (req,res) => {
+//actualizar producto en carrito
+export const updateProductInCart = async (req, res) => {
     try {
-        const cartId = parseInt(req.params.cid);
-        const productId = parseInt(req.params.pid);
-        const {quantity} = req.body;
-        let updProCart = await cartService.updateProductInCart(cartId, productId, quantity);
-        res.send({status: "success", payload: updProCart});
+        const cartId = req.params.cid;
+        const productId = req.params.pid;
+        const { quantity } = req.body;
+
+        if (isNaN(quantity) || quantity < 0) {
+            return res.status(400).send({ status: "error", message: "La cantidad debe ser un número válido y mayor o igual a 0." });
+        }
+
+        const updProCart = await cartService.updateProductInCart(cartId, productId, quantity);
+        if (!updProCart) {
+            return res.status(404).send({ status: "error", message: "No se encontró el carrito o el producto." });
+        }
+
+        res.send({ status: "success", payload: updProCart });
     } catch (error) {
         console.log(error);
         res.status(500).json({ status: "error", message: error.message });
     }
-}
+};
 
+//eliminar carrito
 export const deleteCart = async (req,res) => {
     try {
         const cartId = parseInt(req.params.cid)
@@ -96,120 +115,44 @@ export const deleteCart = async (req,res) => {
     }
 }
 
-export const purchaseCart = async (req,res) => {
+//finalizar compra de carrito
+export const purchaseCart = async (req, res) => {
     try {
-        const cartId = parseInt(req.params.cid)
-        const userId = req.user._id
-        const ticketCart = cartService.purchaseCart(cartId, userId)
-        if(!ticketCart){
-            console.log("No se ha podido completar la compra")
-            res.redirect('/api/carts')
-        };
+        const cartId = req.params.cid;
+        const user = req.user;
+
+        const ticketCart = await cartService.purchaseCart(cartId, user); 
+        
+        if (!ticketCart) {
+            console.log("No se ha podido completar la compra");
+            return res.status(400).json({ status: "error", message: "No se pudo completar la compra." });
+        }
+
         await transport.sendMail({
-            from:"facundo.stazione@gmail.com",
+            from: process.env.EMAIL,
             to: req.user.email,
             subject: "Compra finalizada",
             html: `
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Compra Finalizada - Ticket</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        background-color: #f4f4f4;
-                        margin: 0;
-                        padding: 0;
-                    }
-                    .email-container {
-                        width: 100%;
-                        background-color: #f4f4f4;
-                        padding: 20px 0;
-                    }
-                    .email-content {
-                        max-width: 600px;
-                        margin: 0 auto;
-                        background-color: #ffffff;
-                        padding: 20px;
-                        border: 1px solid #dddddd;
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                    }       
-                    h1 {
-                        color: #333;
-                        font-size: 24px;
-                    }
-                    p {
-                        color: #666;
-                        font-size: 16px;
-                        line-height: 1.5;
-                    }
-                    .ticket-info {
-                        margin-top: 20px;
-                        border-top: 1px solid #dddddd;
-                        padding-top: 20px;
-                    }
-                    .ticket-info p {
-                        margin: 5px 0;
-                    }
-                    .ticket-info strong {
-                        color: #333;
-                    }
-                    .button-container {
-                        margin-top: 30px;
-                    }
-                    .button-container a {
-                        display: inline-block;
-                        padding: 10px 20px;
-                        background-color: #4CAF50;
-                        color: #ffffff;
-                        text-decoration: none;
-                        border-radius: 5px;
-                        font-size: 16px;
-                    }
-                    .footer {
-                        margin-top: 30px;
-                        padding-top: 20px;
-                        border-top: 1px solid #dddddd;
-                        font-size: 12px;
-                        color: #999;
-                    }
-                </style>
-            </head>
-            <body>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Compra Finalizada - Ticket</title>
+                </head>
+                <body>
+                    <h1>¡Gracias por tu compra, ${ticketCart.purchaser}!</h1>
+                    <p>Tu compra ha sido completada exitosamente. A continuación los detalles:</p>
+                    <p><strong>Código del Ticket:</strong> ${ticketCart.code}</p>
+                    <p><strong>Fecha de la Compra:</strong> ${ticketCart.purchase_datetime}</p>
+                    <p><strong>Monto Total:</strong> $${ticketCart.amount}</p>
+                    <p><strong>Comprador:</strong> ${ticketCart.purchaser}</p>
+                </body>
+            `
+        });
 
-                <div class="email-container">
-                    <div class="email-content">
-                        <h1>¡Gracias por tu compra, ${ticketCart.purchaser}!</h1>
-                        <p>Tu compra ha sido completada exitosamente. A continuación te proporcionamos los detalles de tu ticket de compra:</p>
+        return res.render('ticket', { ticketCart });
 
-                        <div class="ticket-info">
-                            <p><strong>Código del Ticket:</strong> ${ticketCart.code}</p>
-                            <p><strong>Fecha de la Compra:</strong> ${ticketCart.purchase_datetime}</p>
-                            <p><strong>Monto Total:</strong> $${ticketCart.amount}</p>
-                            <p><strong>Comprador:</strong> ${ticketCart.purchaser}</p>
-                        </div>
-
-                        <div class="button-container">
-                            <a href="https://eccommerce.com" target="_blank">Visita nuestra tienda</a>
-                        </div>
-
-                        <div class="footer">
-                            <p>Si tienes alguna pregunta o necesitas asistencia, no dudes en contactarnos a través de nuestro servicio de atención al cliente.</p>
-                            <p>Gracias por confiar en nosotros.</p>
-                            <p><strong>Tu tienda ecommerce</strong></p>
-                        </div>
-                    </div>
-                </div>
-
-            </body>
-            `,
-            attachments:[]
-        })
-
-        res.render('ticket', {ticketCart})
     } catch (error) {
         console.log(error);
-        res.status(500).json({ status: "error", message: error.message });
+        return res.status(500).json({ status: "error", message: error.message });
     }
-
-}
+};

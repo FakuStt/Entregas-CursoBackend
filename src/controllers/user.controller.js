@@ -1,7 +1,9 @@
+//CONTROLADOR DE USUARIOS - NO TRABAJA CON LA BASE DE DATOS
 import UserService from "../dao/classes/user.dao.js";
 
 const userService = new UserService;
 
+//obtener todos los usuarios
 export const getUsers = async (req, res) => {
     try {
         let users = await userService.getUsers();
@@ -12,6 +14,7 @@ export const getUsers = async (req, res) => {
     }
 }
 
+//obtener usuario por id
 export const getUserById = async (req, res) => {
     try {
         const { uid } = req.params
@@ -23,6 +26,7 @@ export const getUserById = async (req, res) => {
     }
 }
 
+//crear usuario
 export const createUser = async (req, res) => {
     try {
         const user = req.body
@@ -34,6 +38,7 @@ export const createUser = async (req, res) => {
     }
 }
 
+//eliminar usuario
 export const deleteUser = async (req, res) => {
     try {
         const { uid } = req.params;
@@ -45,9 +50,10 @@ export const deleteUser = async (req, res) => {
     }
 }
 
+//actualizar usuario
 export const updateUser = async (req, res) => {
     try {
-        const { uid } = req.params.id;  //PROBAR SI NO FUNCIONA, EN TODAS CON .ID
+        const { uid } = req.params.id;
         const { user } = req.body;
         let updateUser = await userService.updateUser(uid, user);
         res.send({ status: "success", payload: updateUser })

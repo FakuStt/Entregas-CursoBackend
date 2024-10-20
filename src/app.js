@@ -169,23 +169,80 @@ socketServer.on('connection', socket => {
 
     socket.on('modifyProductQuantity', async ({ cartId, productId, quantity }) => {
         try {
+            console.log("estos son los ids:")
+            console.log(cartId);
+            console.log(productId);
             const cart = await cartModel.findById(cartId);
-            await cart.products.findByIdAndUpdate(productId, quantity)
+            if (!cart) {
+                return socket.emit('errorMessage', 'Carrito no encontrado');
+            }
+    
+            const productIndex = cart.products.findIndex(product => product.productId.toString() === productId);
+            if (productIndex === -1) {
+                return socket.emit('errorMessage', 'Producto no encontrado en el carrito');
+            }
+    
+            // Asegúrate de que quantity sea un número válido
+            quantity = parseInt(quantity, 10);
+            if (isNaN(quantity) || quantity <= 0) {
+                return socket.emit('errorMessage', 'Cantidad no válida');
+            }
+    
+            // Actualizar la cantidad del producto
+            cart.products[productIndex].quantity = quantity;
+            await cart.save();
+    
+            // Emitir evento para actualizar la lista de carritos
+            socketServer.emit('cartListUpdated', await cartModel.find());
         } catch (error) {
             console.error('Error actualizando la cantidad del producto en el carrito:', error);
-            socket.emit('errorMessage', 'Error al agregar producto al carrito');
+            socket.emit('errorMessage', 'Error al modificar la cantidad del producto');
+        }
+    });
+    
+
+    // Manejar la adición de productos a carritos
+    socket.on('addProductToCart', async (data) => {
+        try {
+            const { productId, cartId, quantity } = data;
+    
+            // Verificar que productId no esté undefined
+            if (!productId || !cartId || !quantity) {
+                socket.emit('errorMessage', 'Faltan datos requeridos.');
+                return;
+            }
+    
+            // Busca el carrito por ID
+            const cart = await cartModel.findById(cartId);
+            if (!cart) {
+                socket.emit('errorMessage', 'Carrito no encontrado.');
+                return;
+            }
+    
+            // Verifica si el producto ya está en el carrito
+            const productIndex = cart.products.findIndex(p => p.product == productId);
+            if (productIndex > -1) {
+                // Si el producto ya está en el carrito, actualiza la cantidad
+                cart.products[productIndex].quantity += parseInt(quantity);
+            } else {
+                // Si el producto no está en el carrito, agrégalo
+                cart.products.push({ product: productId, quantity: parseInt(quantity) });
+            }
+    
+            // Guarda el carrito actualizado
+            await cart.save();
+            socket.emit('cartListUpdated', cart);
+        } catch (error) {
+            console.error('Error al agregar producto al carrito:', error.message);
+            socket.emit('errorMessage', 'Hubo un error al agregar el producto al carrito.');
         }
     });
 
-    // Manejar la adición de productos a carritos
-    socket.on('addProductToCart', (data) => {
-        const { cartId, productId, quantity } = data; // Asegúrate de que quantity esté en el objeto data
-        addProductToCart(cartId, productId, quantity);
-        socket.emit('')
-    });
+    
+    
 
     socket.on('disconnect', () => {
-        console.log('Cliente desconectado'); // Muestra mensaje cuando un cliente se desconecta
+        console.log('Cliente desconectado');
     });
 });
 

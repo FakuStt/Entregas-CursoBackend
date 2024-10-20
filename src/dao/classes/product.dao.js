@@ -1,7 +1,10 @@
+//ProductService - Trabaja con la base de datos
 import productModel from "../models/products.model.js";
 import {getProducts} from "../../utils.js"
 
 class ProductService {
+
+    //obtener todos los productos paginados
     async getPaginateProducts(data){
         try{
             const result = await getProducts(data);
@@ -12,6 +15,7 @@ class ProductService {
         }
     }
 
+    //obtener producto por id
     async getProductById(pid){
         try {
             const encontrado = await productModel.findById(pid)
@@ -29,9 +33,10 @@ class ProductService {
         }
     }
 
+    //crear producto
     async createProduct(title, description, code, price, status, stock, category, thumbnails){
         try {
-            // Validar que los campos obligatorios están presentes
+            
             if (!title || !description || !code || !price || !stock || !category) {
                 console.log("Todos los campos son requeridos");
                 return null;
@@ -57,6 +62,7 @@ class ProductService {
         }
     }
 
+    //actualizar producto
     async updateProduct(pId, dataProd){
         try{
             const encontrado = await productModel.findByIdAndUpdate(pId, dataProd, {new: true});
@@ -74,6 +80,7 @@ class ProductService {
         }
     }
 
+    //eliminar producto
     async deleteProduct(pId){
         try{
     
@@ -92,6 +99,7 @@ class ProductService {
             return null;
         }
     }
+
 }
 
 export default ProductService;

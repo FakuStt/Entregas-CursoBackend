@@ -1,3 +1,4 @@
+//MIDDLEWARE PARA VERIFICAR SI ES O NO ES ADMIN
 import passport from "passport";
 
 export const isAdmin = (req, res, next) => {

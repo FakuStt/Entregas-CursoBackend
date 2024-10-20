@@ -149,7 +149,7 @@
                 <li>
                     <img src="https://via.placeholder.com/150" alt="Producto" /> <!-- Imagen predeterminada -->
                     <p>Producto: {{this.title}} - Precio: {{this.price}} - Categoria: {{this.category}} - Descripcion: {{description}} - Disponibles: {{stock}}</p>
-                    <button onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
+                    <button id="addProductToCartButton-{{this._id}}" onclick="addProductToCart('{{this._id}}')">Agregar al Carrito</button>
                     <button onclick="location.href='/api/products/{{this._id}}'">Visitar Producto</button>
                 </li>
             {{/each}}

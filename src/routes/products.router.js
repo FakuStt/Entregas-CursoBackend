@@ -1,3 +1,4 @@
+//RUTA PARA MANEJO DE PRODUCTOS
 import { Router } from "express";
 import { getPaginateProducts, getProductById, createProduct, updatedProduct, deleteProduct } from "../controllers/product.controller.js";
 

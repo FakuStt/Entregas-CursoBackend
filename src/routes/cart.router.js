@@ -1,7 +1,10 @@
+//RUTA PARA EL MANEJO DE CARRITO
 import { Router } from "express";
-import { createCart, getCartById, saveProductIdInCartId, deleteProductInCart, updateCart, updateProductInCart, deleteCart, purchaseCart, getAllCarts } from "../controllers/cart.controller.js";
+import { isAuthenticated } from "../middleware/auth.js";
+import { createCart, getCartById, saveProductIdInCartId,deleteProductInCart, updateCart, updateProductInCart, deleteCart, purchaseCart, getAllCarts } from "../controllers/cart.controller.js";
 
 const router = Router();
+
 //Agregar un carrito nuevo
 router.post('/', createCart)
 
@@ -26,6 +29,7 @@ router.put('/:cid/products/:pid', updateProductInCart)
 //Eliminar un carrito
 router.delete('/:cid', deleteCart)
 
-router.get('/:cid/purchase', purchaseCart)
+//Finalizar compra
+router.get('/:cid/purchase', isAuthenticated, purchaseCart)
 
 export default router;
