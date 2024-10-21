@@ -78,22 +78,25 @@ class CartService{
     }
 
     //eliminar un producto de un carrito
-     async deleteProductInCart(cartId, productId) {
+    async deleteProductInCart(cartId, productId) {
         try {
             const cart = await cartModel.findById(cartId);
             
             if (!cart) {
-                console.log("No fue posible encontrar el carrito por ese ID");
+                console.log("No se encontró el carrito con ese ID");
                 return null;
             }
-            cart.products.findByIdAndDelete(productId);
+    
+            // Filtra el array de productos para eliminar el producto con el ID dado
+            cart.products = cart.products.filter(p => p.product.toString() !== productId);
+    
             return await cart.save();
-            
         } catch (error) {
             console.error(error);
             return null;
         }
     }
+    
     
     //actualizar un carrito
     async updateCart(cartId, dataCart){

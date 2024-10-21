@@ -56,16 +56,27 @@ export const getAllCarts = async (req,res) => {
 //guardar producto en carrito
 export const saveProductIdInCartId = async (req,res) => {
     try {
-        const cartID = req.params.cid;
-        const productID = req.params.pid;
-        const quantity = req.body || 1;
-        console.log(cartID)
-        console.log(productID)
-        console.log(quantity)
-        let updateCart = await cartService.saveProductIdInCartId(cartID, productID, quantity);
-        res.send({status: "success", payload: updateCart});
+        const {  quantity } = req.body;
+        const cartId = req.params.cid;
+        const productId = req.params.pid;
+        const cart = await cartService.getCartById(cartId);
+
+        if (!cart) {
+            return res.status(404).json({ status: "error", message: "Carrito no encontrado" });
+        }
+
+        const productIndex = cart.products.findIndex(p => p.product == productId);
+
+        if (productIndex > -1) {
+            cart.products[productIndex].quantity += parseInt(quantity);
+        } else {
+            cart.products.push({ product: productId, quantity: parseInt(quantity) });
+        }
+
+        const updatedCart = await cart.save();
+        res.json({ status: "success", cart: updatedCart });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ status: "error", message: error.message });
     }
 }

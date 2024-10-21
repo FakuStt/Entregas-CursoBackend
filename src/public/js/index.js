@@ -35,11 +35,11 @@ async function fetchCarts() {
     }
 }
 
-// Actualización periódica de productos y carritos
-/*setInterval(() => {
+// Actualización cada cierto tiempo
+setInterval(() => {
     fetchProducts();
     fetchCarts();
-}, 5000);*/
+}, 5000);
 
 // Solicitar carritos y manejar respuesta
 async function getCarts() {
@@ -160,7 +160,6 @@ async function deleteCart(cartID) {
         });
 
         if (confirmation.isConfirmed) {
-            // Verifica que `cartID` sea una cadena en la consola
             console.log("ID del carrito a eliminar:", cartID);
 
             const response = await fetch(`/api/carts/${cartID}`, {
@@ -172,9 +171,9 @@ async function deleteCart(cartID) {
 
             if (response.ok) {
                 Swal.fire('Eliminado', 'El carrito ha sido eliminado.', 'success');
-                fetchCarts(); // Actualiza la lista de carritos
+                fetchCarts();
             } else {
-                const data = await response.json(); // Parsear el error que venga del servidor
+                const data = await response.json();
                 Swal.fire('Error', data.message || 'No se pudo eliminar el carrito.', 'error');
             }
         }
@@ -235,7 +234,7 @@ async function addProductToCart(productID) {
     }
 }
 
-async function deleteProductCart(cartID, productID){
+async function deleteProductCart(cartID, productID) {
     try {
         const confirmation = await Swal.fire({
             title: '¿Estás seguro de eliminarlo?',
@@ -248,7 +247,7 @@ async function deleteProductCart(cartID, productID){
         if (confirmation.isConfirmed) {
             console.log("ID del carrito a eliminar:", cartID);
 
-            const response = await fetch(`/api/carts/${cartID}/product/${productID}`, {
+            const response = await fetch(`/api/carts/${cartID}/products/${productID}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -260,16 +259,17 @@ async function deleteProductCart(cartID, productID){
                 fetchCarts();
             } else {
                 const data = await response.json();
-                Swal.fire('Error', data.message || 'No se pudo eliminarel producto del carrito.', 'error');
+                Swal.fire('Error', data.message || 'No se pudo eliminar el producto del carrito.', 'error');
             }
         }
     } catch (error) {
-        
+        console.error('Error al eliminar el producto del carrito:', error);
     }
 }
 
+
 // Modificar producto
-function modifyProduct(productID) {
+async function modifyProduct(productID) {
     Swal.fire({
         title: 'Modifica los datos del producto:',
         html: `
@@ -302,7 +302,6 @@ function modifyProduct(productID) {
             }
 
             return {
-                id: productID,
                 title,
                 description,
                 price: parseFloat(price),
@@ -313,27 +312,29 @@ function modifyProduct(productID) {
                 thumbnails
             };
         }
-    }).then((result) => {
-        console.log(result)
+    }).then(async (result) => {
         if (result.isConfirmed) {
-            const response = fetch(`/api/products/${result.id}`, {
+            const data = result.value;
+
+            const response = await fetch(`/api/products/${productID}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({result})
+                body: JSON.stringify(data)
             });
 
             if (response.ok) {
                 Swal.fire('Producto modificado', 'Los datos del producto han sido actualizados exitosamente', 'success');
                 fetchProducts();
             } else {
-                const data = response.json();
+                const data = await response.json();
                 Swal.fire('Error', data.message || 'No se pudo modificar el producto.', 'error');
             }
         }
     });
 }
+
 
 // Modificar cantidad de producto en carrito
 function modifyProductQuantity(cartID, productID) {
@@ -381,7 +382,7 @@ function deleteProduct(productID) {
             .then(response => {
                 if (!response.ok) throw new Error('Error al eliminar el producto');
                 Swal.fire('Producto eliminado', 'El producto ha sido eliminado exitosamente', 'success');
-                fetchProducts(); // Actualiza la lista de productos
+                fetchProducts();
             })
             .catch(error => {
                 console.error('Error:', error);

@@ -81,24 +81,24 @@ class ProductService {
     }
 
     //eliminar producto
-    async deleteProduct(pId){
-        try{
+    async deleteProduct(pId) {
+        try {
+            const encontrado = await productModel.findById(pId);
     
-            const encontrado = productModel.findById(pId)
-    
-            if (encontrado){
-                encontrado = productModel.findByIdAndDelete(pId)
+            if (encontrado) {
+                const deletedProduct = await productModel.findByIdAndDelete(pId);
                 console.log(`Producto con ID ${pId} eliminado correctamente`);
-                return encontrado;
-            } else{
-                console.log(`Producto con ID ${pId} no se encontro`);
+                return deletedProduct;
+            } else {
+                console.log(`Producto con ID ${pId} no se encontró`);
                 return null;
             }
-        }catch(error){
+        } catch (error) {
             console.error(error);
             return null;
         }
     }
+    
 
 }
 

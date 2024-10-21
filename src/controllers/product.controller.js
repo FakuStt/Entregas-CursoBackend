@@ -64,13 +64,18 @@ export const updatedProduct = async (req,res) => {
 }
 
 //eliminar producto
-export const deleteProduct = async (req,res) => {
+export const deleteProduct = async (req, res) => {
     try {
-        const pId = parseInt(req.params.pid);
-        const deletedProduct = productService.deleteProduct(pId);
-        res.status(200).json(deletedProduct); 
+        const pId = req.params.pid;
+        const deletedProduct = await productService.deleteProduct(pId);
+
+        if (deletedProduct) {
+            res.status(200).json(deletedProduct); 
+        } else {
+            res.status(404).json({ status: "error", message: "Producto no encontrado" });
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({ status: "error", message: error.message });
     }
-}
+};
