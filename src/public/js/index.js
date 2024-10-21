@@ -9,48 +9,97 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('El DOM está cargado');
     setupAddProductButton();
     crearCart();
-    getProducts();
-    getCarts();
+    fetchProducts();
+    fetchCarts();
 });
 
-// Solicitar y manejar carritos
+// Fetch y renderizar productos
+async function fetchProducts() {
+    try {
+        const response = await fetch('/api/products');
+        const products = await response.json();
+        renderProducts(products);
+    } catch (error) {
+        console.error('Error al obtener productos:', error);
+    }
+}
+
+// Fetch y renderizar carritos
+async function fetchCarts() {
+    try {
+        const response = await fetch('/api/carts');
+        const carts = await response.json();
+        renderCarts(carts);
+    } catch (error) {
+        console.error('Error al obtener carritos:', error);
+    }
+}
+
+// Actualización periódica de productos y carritos
+/*setInterval(() => {
+    fetchProducts();
+    fetchCarts();
+}, 5000);*/
+
+// Solicitar carritos y manejar respuesta
 async function getCarts() {
     try {
         const response = await fetch('/api/carts');
         const carts = await response.json();
-        socket.emit('updateCarts', carts); 
+        socket.emit('updateCarts', carts);
     } catch (error) {
         console.error('Error fetching carts:', error);
-        socket.emit('updateCartsError', { error: 'Failed to fetch carts' }); 
+        socket.emit('updateCartsError', { error: 'Failed to fetch carts' });
     }
 }
 
+// Renderizar carritos en el DOM
 function renderCarts(carts) {
     const cartContainer = document.getElementById('cartContainer');
     if (cartContainer) {
-        cartContainer.innerHTML = ''; 
+        cartContainer.innerHTML = '';
         carts.forEach(cart => {
             cartContainer.innerHTML += createCartHTML(cart);
         });
     }
 }
 
-// Solicitar productos
-function getProducts() {
-    socket.emit('getProducts');
-}
-
 // Crear nuevo carrito
-function crearCart() {
-    const crearCartButton = document.getElementById('crearCartButton');
-    if (crearCartButton) {
-        crearCartButton.addEventListener('click', () => {
-            socket.emit('createCart');
+async function crearCart() {
+    try {
+        const confirmation = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Se va a crear un nuevo carrito vacío.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, crear carrito',
+            cancelButtonText: 'Cancelar'
         });
+
+        if (confirmation.isConfirmed) {
+            const response = await fetch('/api/carts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ products: [] })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Swal.fire('Creado', 'El carrito ha sido creado con éxito.', 'success');
+                fetchCarts();
+            } else {
+                Swal.fire('Error', data.message || 'No se pudo crear el carrito.', 'error');
+            }
+        }
+    } catch (error) {
+        console.error('Error al crear el carrito:', error);
+        Swal.fire('Error', 'Ocurrió un problema al intentar crear el carrito.', 'error');
     }
 }
 
-// Confirmación y acciones de carritos y productos
+
+// Confirmación de acciones
 function confirmAction(title, text, confirmText, callback) {
     Swal.fire({
         title,
@@ -65,54 +114,87 @@ function confirmAction(title, text, confirmText, callback) {
 }
 
 // Vaciar carrito
-function emptyCart(cartID) {
-    Swal.fire({
-        title: '¿Estás seguro de que deseas vaciar este carrito?',
-        text: "Esta acción eliminará todos los productos del carrito.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, vaciar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            socket.emit('emptyCart', cartID);
+async function emptyCart(cartID) {
+    try {
+        const confirmation = await Swal.fire({
+            title: '¿Estás seguro de vaciar el carrito?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, vaciarlo',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (confirmation.isConfirmed) {
+
+            const response = await fetch(`/api/carts/${cartID}/empty`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                Swal.fire('Vaciado', 'El carrito ha sido vaciado.', 'success');
+                fetchCarts();
+            } else {
+                const data = await response.json();
+                Swal.fire('Error', data.message || 'No se pudo eliminar el carrito.', 'error');
+            }
         }
-    });
+    } catch (error) {
+        console.error('Error al vaciar el carrito:', error);
+    }
 }
 
 // Eliminar carrito
-function deleteCart(cartID) {
-    Swal.fire({
-        title: '¿Estás seguro de que deseas eliminar este carrito?',
-        text: "Esta acción eliminará el carrito permanentemente.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            socket.emit('deleteCart', cartID);
+async function deleteCart(cartID) {
+    try {
+        const confirmation = await Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminarlo',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (confirmation.isConfirmed) {
+            // Verifica que `cartID` sea una cadena en la consola
+            console.log("ID del carrito a eliminar:", cartID);
+
+            const response = await fetch(`/api/carts/${cartID}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                Swal.fire('Eliminado', 'El carrito ha sido eliminado.', 'success');
+                fetchCarts(); // Actualiza la lista de carritos
+            } else {
+                const data = await response.json(); // Parsear el error que venga del servidor
+                Swal.fire('Error', data.message || 'No se pudo eliminar el carrito.', 'error');
+            }
         }
-    });
+    } catch (error) {
+        console.error('Error al eliminar el carrito:', error);
+        Swal.fire('Error', 'Ocurrió un problema al intentar eliminar el carrito.', 'error');
+    }
 }
 
-// Agregar producto a carrito
-function addProductToCart(productID) {
-    console.log("Función 'addProductToCart' invocada para el producto:", productID);
-
+// Agregar producto al carrito
+async function addProductToCart(productID) {
     const addProductToCartButton = document.getElementById(`addProductToCartButton-${productID}`);
-    console.log("Buscando botón con ID:", `addProductToCartButton-${productID}`);
-    
-    if(addProductToCartButton) {
-        console.log("Botón encontrado, registrando evento 'click'.");
-        addProductToCartButton.addEventListener('click', () => {
-            console.log("Botón clicado, mostrando SweetAlert.");
 
+    if (addProductToCartButton) {
+        addProductToCartButton.addEventListener('click', () => {
             Swal.fire({
                 title: 'Agregar al carrito',
                 html: `
                     <input id="cartId" class="swal2-input" type="text" placeholder="Id del Carrito">
-                    <input id="quantity" class="swal2-input" type="number" placeholder="Cantidad a agregar">
+                    <input id="quantity" class="swal2-input" type="number" placeholder="Cantidad a agregar" min="1">
                 `,
                 focusConfirm: false,
                 preConfirm: () => {
@@ -124,30 +206,69 @@ function addProductToCart(productID) {
                         return false;
                     }
 
-                    return {
-                        productId: productID,
-                        cartId: cartId,
-                        quantity: quantity
-                    };
+                    return { cartId, quantity };
                 }
-            }).then((result) => {
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    const data = result.value;
-                    console.log("Datos enviados a través del socket:", data);
-                    socket.emit('addProductToCart', data);
-                    Swal.fire('Producto agregado al carrito', 'El producto se ha agregado al carrito correctamente', 'success');
+                    const { cartId, quantity } = result.value;
+
+                    console.log("Info:", { cartId, productID, quantity });
+
+                    const response = await fetch(`/api/carts/${cartId}/product/${productID}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ quantity })
+                    });
+
+                    if (response.ok) {
+                        Swal.fire('Agregado', 'El producto ha sido agregado al carrito!', 'success');
+                        fetchCarts();
+                    } else {
+                        const data = await response.json();
+                        Swal.fire('Error', data.message || 'No se pudo agregar el producto al carrito.', 'error');
+                    }
                 }
             });
         });
-    } else {
-        console.log("Botón no encontrado para el producto:", productID);
     }
 }
 
+async function deleteProductCart(cartID, productID){
+    try {
+        const confirmation = await Swal.fire({
+            title: '¿Estás seguro de eliminarlo?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminarlo',
+            cancelButtonText: 'Cancelar'
+        });
+        if (confirmation.isConfirmed) {
+            console.log("ID del carrito a eliminar:", cartID);
 
+            const response = await fetch(`/api/carts/${cartID}/product/${productID}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                Swal.fire('Eliminado', 'El producto ha sido eliminado del carrito.', 'success');
+                fetchCarts();
+            } else {
+                const data = await response.json();
+                Swal.fire('Error', data.message || 'No se pudo eliminarel producto del carrito.', 'error');
+            }
+        }
+    } catch (error) {
+        
+    }
+}
 
 // Modificar producto
-
 function modifyProduct(productID) {
     Swal.fire({
         title: 'Modifica los datos del producto:',
@@ -182,34 +303,36 @@ function modifyProduct(productID) {
 
             return {
                 id: productID,
-                title: title,
-                description: description,
+                title,
+                description,
                 price: parseFloat(price),
-                code: code,
+                code,
                 stock: parseInt(stock, 10),
-                status: status,
-                category: category,
-                thumbnails: thumbnails
+                status,
+                category,
+                thumbnails
             };
         }
     }).then((result) => {
+        console.log(result)
         if (result.isConfirmed) {
-            const updatedProduct = result.value;
-            socket.emit('updateProduct', updatedProduct);
-            Swal.fire('Producto modificado', 'Los datos del producto han sido actualizados exitosamente', 'success');
+            const response = fetch(`/api/products/${result.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({result})
+            });
+
+            if (response.ok) {
+                Swal.fire('Producto modificado', 'Los datos del producto han sido actualizados exitosamente', 'success');
+                fetchProducts();
+            } else {
+                const data = response.json();
+                Swal.fire('Error', data.message || 'No se pudo modificar el producto.', 'error');
+            }
         }
     });
-}
-
-
-// Eliminar producto
-function deleteProduct(productID) {
-    confirmAction(
-        '¿Estás seguro de que deseas eliminar este producto?',
-        'Esta acción eliminará el producto permanentemente.',
-        'Sí, eliminar',
-        () => socket.emit('deleteProduct', productID)
-    );
 }
 
 // Modificar cantidad de producto en carrito
@@ -228,23 +351,17 @@ function modifyProductQuantity(cartID, productID) {
         }
     }).then(result => {
         if (result.isConfirmed) {
-            // Hacer la llamada a la API para actualizar la cantidad
             fetch(`/api/carts/${cartID}/products/${productID}`, {
-                method: 'PUT', // Cambiar a PUT según tu ruta
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ quantity: result.value.quantity })
             })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error en la actualización');
-                }
+                if (!response.ok) throw new Error('Error en la actualización');
                 return response.json();
             })
             .then(data => {
                 Swal.fire('Cantidad actualizada', 'La cantidad del producto en el carrito ha sido actualizada', 'success');
-                // Actualiza el DOM si es necesario, por ejemplo, actualizar la cantidad mostrada
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -254,105 +371,68 @@ function modifyProductQuantity(cartID, productID) {
     });
 }
 
-
-
-function deleteProductCart(cartID, productID) {
+// Eliminar producto
+function deleteProduct(productID) {
     confirmAction(
-        '¿Estás seguro de que deseas eliminar este producto del carrito?',
-        'Esta acción eliminará el producto del carrito.',
+        '¿Estás seguro de que deseas eliminar este producto?',
+        'Esta acción eliminará el producto permanentemente.',
         'Sí, eliminar',
-        async () => {
-            try {
-                const response = await fetch(`/api/carts/${cartID}/products/${productID}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Error al eliminar el producto del carrito');
-                }
-
-                const result = await response.json();
-                Swal.fire('Producto eliminado', 'El producto ha sido eliminado del carrito', 'success');
-                // Aquí puedes agregar lógica para actualizar la vista si es necesario
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Error', 'No se pudo eliminar el producto', 'error');
-            }
-        }
+        () => fetch(`/api/products/${productID}`, { method: 'DELETE' })
+            .then(response => {
+                if (!response.ok) throw new Error('Error al eliminar el producto');
+                Swal.fire('Producto eliminado', 'El producto ha sido eliminado exitosamente', 'success');
+                fetchProducts(); // Actualiza la lista de productos
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Hubo un error al eliminar el producto', 'error');
+            })
     );
 }
 
-// Configurar botón para agregar producto
-function setupAddProductButton() {
-    const addProductButton = document.getElementById('addProductButton');
-    if (addProductButton) {
-        addProductButton.addEventListener('click', () => {
-            Swal.fire({
-                title: 'Agregar un nuevo producto',
-                html: `
-                    <input id="title" class="swal2-input" type="text" placeholder="Título">
-                    <input id="description" class="swal2-input" type="text" placeholder="Descripción">
-                    <input id="price" class="swal2-input" type="number" placeholder="Precio">
-                    <input id="code" class="swal2-input" type="text" placeholder="Código">
-                    <input id="stock" class="swal2-input" type="number" placeholder="Stock">
-                    <select id="status" class="swal2-input">
-                        <option value="true">Disponible</option>
-                        <option value="false">No disponible</option>
-                    </select>
-                    <input id="category" class="swal2-input" type="text" placeholder="Categoría">
-                    <input id="thumbnails" class="swal2-input" type="text" placeholder="Thumbnails (URL)">
-                `,
-                focusConfirm: false,
-                preConfirm: () => {
-                    const product = {
-                        title: document.getElementById('title').value.trim(),
-                        description: document.getElementById('description').value.trim(),
-                        price: parseFloat(document.getElementById('price').value.trim()),
-                        code: document.getElementById('code').value.trim(),
-                        stock: parseInt(document.getElementById('stock').value.trim(), 10),
-                        status: document.getElementById('status').value === 'true',
-                        category: document.getElementById('category').value.trim(),
-                        thumbnails: document.getElementById('thumbnails').value.trim()
-                    };
-                    if (Object.values(product).some(val => !val)) {
-                        Swal.showValidationMessage('Todos los campos son obligatorios.');
-                        return false;
-                    }
-                    return product;
-                }
-            }).then(result => {
-                if (result.isConfirmed) {
-                    socket.emit('addProduct', result.value, response => {
-                        Swal.fire(
-                            response.success ? 'Producto agregado' : 'Error',
-                            response.success ? 'El nuevo producto ha sido agregado exitosamente' : response.message || 'Hubo un problema al agregar el producto',
-                            response.success ? 'success' : 'error'
-                        );
-                    });
-                }
-            });
+// Crear HTML para cada carrito
+function createCartHTML(cart) {
+    return `
+        <div class="cart">
+            <div class="cart-info">
+                <span>ID: ${cart._id}</span>
+                <span>Cantidad de productos: ${cart.products.length}</span>
+            </div>
+            <div class="cart-actions">
+                <button class="btn" onclick="emptyCart('${cart._id}')">Vaciar</button>
+                <button class="btn" onclick="deleteCart('${cart._id}')">Eliminar</button>
+            </div>
+        </div>
+    `;
+}
+
+// Renderizar productos en el DOM
+function renderProducts(products) {
+    const productsContainer = document.getElementById('productsContainer');
+    if (productsContainer) {
+        productsContainer.innerHTML = '';
+        products.forEach(product => {
+            productsContainer.innerHTML += createProductHTML(product);
+            addProductToCart(product._id);
         });
-    } else {
-        console.log('Botón NO encontrado');
     }
 }
 
-// Socket.io listeners
-socket.on('productListUpdated', () => location.reload());
-socket.on('cartListUpdated', () => location.reload());
-socket.on('updateCarts', (carts) => {
-    renderCarts(carts);
-});
-socket.on('cartListUpdated', (carts) => {
-    // Actualiza la lista de carritos
-    renderCarts(carts);
-});
-socket.on('errorMessage', message => Swal.fire('Error', message, 'error'));
-
-
+// Crear HTML para cada producto
+function createProductHTML(product) {
+    return `
+        <div class="product">
+            <h3>${product.title}</h3>
+            <p>${product.description}</p>
+            <p>Precio: $${product.price}</p>
+            <p>Código: ${product.code}</p>
+            <p>Stock: ${product.stock}</p>
+            <button class="btn" onclick="modifyProduct('${product._id}')">Modificar</button>
+            <button class="btn" id="addProductToCartButton-${product._id}">Agregar al Carrito</button>
+            <button class="btn" onclick="deleteProduct('${product._id}')">Eliminar</button>
+        </div>
+    `;
+}
 
 
 

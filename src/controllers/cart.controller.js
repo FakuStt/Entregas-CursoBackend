@@ -16,6 +16,18 @@ export const createCart = async (req,res) => {
     }
 }
 
+//vaciar carrito
+export const emptyCart = async (req,res) => {
+    try {
+        const cartId = req.params.cid;
+        let emptyCart = await cartService.emptyCart(cartId);
+        res.send({status: "success", payload: emptyCart});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ status: "error", message: error.message });
+    }
+}
+
 //obtener carrito por id
 export const getCartById = async (req,res) => {
     try {
@@ -44,9 +56,13 @@ export const getAllCarts = async (req,res) => {
 //guardar producto en carrito
 export const saveProductIdInCartId = async (req,res) => {
     try {
-        const cartID = parseInt(req.params.cid);
-        const productID = parseInt(req.params.pid);
-        let updateCart = await cartService.saveProductIdInCartId(cartID, productID);
+        const cartID = req.params.cid;
+        const productID = req.params.pid;
+        const quantity = req.body || 1;
+        console.log(cartID)
+        console.log(productID)
+        console.log(quantity)
+        let updateCart = await cartService.saveProductIdInCartId(cartID, productID, quantity);
         res.send({status: "success", payload: updateCart});
     } catch (error) {
         console.log(error);
@@ -58,6 +74,7 @@ export const saveProductIdInCartId = async (req,res) => {
 export const deleteProductInCart = async (req, res) => {
     try {
         const cartId = req.params.cid;
+        console.log(cartId)
         const productId = req.params.pid;
         let updateCart = await cartService.deleteProductInCart(cartId, productId);
         res.send({ status: "success", payload: updateCart });
@@ -70,7 +87,7 @@ export const deleteProductInCart = async (req, res) => {
 //actualizar carrito
 export const updateCart = async (req,res) => {
     try {
-        const cartId = parseInt(req.params.cid);
+        const cartId = req.params.cid;
         const dataCart = req.body;
         let updCart = await cartService.updateCart(cartId, dataCart);
         res.send({status: "success", payload: updCart});
@@ -106,7 +123,8 @@ export const updateProductInCart = async (req, res) => {
 //eliminar carrito
 export const deleteCart = async (req,res) => {
     try {
-        const cartId = parseInt(req.params.cid)
+        const cartId = req.params.cid
+        console.log(cartId)
         let deletedCart = await cartService.deleteCart(cartId);
         res.send({status: "success", payload: deletedCart});
     } catch (error) {

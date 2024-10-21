@@ -53,9 +53,9 @@ export const createProduct = async (req,res) => {
 //actulizar producto
 export const updatedProduct = async (req,res) => {
     try {
-        const uId = parseInt(req.params.pid);
-        const dataUser = req.body;
-        let updateProduct = await productService.updateProduct(uId, dataUser);
+        const pId = req.params.pid;
+        const dataProd = req.body;
+        let updateProduct = await productService.updateProduct(pId, dataProd);
         res.status(200).json(updateProduct); 
     } catch (error) {
         console.log(error);

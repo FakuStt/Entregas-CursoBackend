@@ -86,16 +86,9 @@ class CartService{
                 console.log("No fue posible encontrar el carrito por ese ID");
                 return null;
             }
+            cart.products.findByIdAndDelete(productId);
+            return await cart.save();
             
-            const productIndex = cart.products.findIndex((prod) => prod.product.toString() === productId);
-            if (productIndex !== -1) {
-                cart.products.splice(productIndex, 1);
-                console.log(`Se ha eliminado el producto del carrito correctamente`);
-                return await cart.save();
-            } else {
-                console.log("Error, no se ha podido encontrar el producto en el carrito");
-                return null;
-            }
         } catch (error) {
             console.error(error);
             return null;
@@ -154,15 +147,29 @@ class CartService{
     //eliminar un carrito
     async deleteCart(cartId){
         try {
+            console.log(cartId)
+            const cart = await cartModel.findByIdAndDelete(cartId);
+            if (!cart){
+                console.log("No fue posible encontrar el carrito por ese id");
+                return null;
+            }
+        } catch (error) {
+            console.error(error)
+            return null;
+        }
+    }
+
+    //vaciar carrito
+    async emptyCart(cartId){
+        try {
+            console.log(cartId)
             const cart = await cartModel.findById(cartId);
             if (!cart){
                 console.log("No fue posible encontrar el carrito por ese id");
                 return null;
             }
             cart.products = [];
-            console.log(`Se ha actualizado la cantidad del producto del carrito correctamente`);
-            return await cart.save();
-    
+            return await cart.save()
         } catch (error) {
             console.error(error)
             return null;
